@@ -1,0 +1,28 @@
+{
+  "name": "siapkas-server",
+  "version": "1.0.0",
+  "description": "SIAPKas - server API Sistem Informasi Akuntansi Pengeluaran Kas",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "db:migrate": "node db/migrate.js",
+    "db:reset": "node db/migrate.js --reset",
+    "db:demo": "node db/demo.js",
+    "test": "node --test --test-concurrency=1 --test-reporter=spec \"test/*.test.js\""
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "multer": "^2.4.0",
+    "mysql2": "^3.24.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.0"
+  }
+}

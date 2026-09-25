@@ -5,17 +5,17 @@ import { z, validasi, id, idOpsional, teks, teksOpsional, tanggal, tanggalOpsion
 import { catatAudit } from '../lib/audit.js';
 import { perlu, punya } from '../lib/akses.js';
 import { nomorBaru } from '../lib/penomoran.js';
-import { kali, jumlahkan, hitungPajak, keSen, tambah, kurang } from '../lib/uang.js';
+import { kali, jumlahkan, hitungPajak, keSen, tambah, kurang, tarifEfektif, bagiProporsional } from '../lib/uang.js';
 import { hariIni, tambahHari, selisihHari } from '../lib/tanggal.js';
 import { daftarkanDokumen, kunciBaris, pastikanStatus } from '../lib/dokumen.js';
 import { batalkanPersetujuan, riwayatPersetujuan, bolehMemutuskan } from '../lib/persetujuan.js';
 import { ajukanDokumen } from '../lib/alur.js';
 import { postingJurnal, balikJurnal } from '../lib/jurnal.js';
-import { akunSistem, angkaPengaturan } from '../lib/pengaturan.js';
+import { akunSistem, angkaPengaturan, ambilPengaturan } from '../lib/pengaturan.js';
 
 export const router = Router();
 
-const PERAN_LIHAT = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR', 'KASIR'];
+const PERAN_LIHAT = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR', 'KASIR'];
 
 /** Normalisasi nomor faktur untuk deteksi duplikat: huruf kapital, tanpa spasi dan tanda baca. */
 export const normalNomorFaktur = (nomor) => String(nomor).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -63,12 +63,12 @@ async function periksaDuplikat(conn, pemasokId, nomorFaktur, kecualiId = 0) {
   return norm;
 }
 
-/** Hitung pajak PPh atas baris jasa; tarif dinaikkan 100% untuk pemasok tanpa NPWP bila kode pajak menentukan. */
+/** Hitung pajak PPh atas baris jasa; tarif dinaikkan sesuai kode pajak bila pemasok tanpa NPWP. */
 export async function hitungPph(conn, pajakPphId, dasar, tanpaNpwp) {
   if (!pajakPphId) return { pajak: null, tarif: 0, pph: 0 };
   const pajak = await satu(conn, "SELECT * FROM pajak WHERE id = ? AND jenis = 'PPH' AND aktif = 1", [pajakPphId]);
   if (!pajak) throw galatMasukan('Kode PPh tidak aktif.', { pajak_pph_id: 'Pilih kode PPh aktif.' });
-  const tarif = Number(pajak.tarif) * (pajak.naik_tanpa_npwp && tanpaNpwp ? 2 : 1);
+  const tarif = tarifEfektif(pajak, tanpaNpwp);
   return { pajak, tarif, pph: hitungPajak(dasar, tarif) };
 }
 
@@ -185,8 +185,16 @@ export async function postingFaktur(conn, ctx, fakturId) {
   const utangUsaha = await akunSistem('akun_utang_usaha', conn);
   const baris = detail.map((d) => ({ akun_id: d.akun_id, departemen_id: po.departemen_id, debit: d.jumlah, kredit: 0, keterangan: d.uraian }));
   if (keSen(f.ppn) > 0) {
-    const pajakPpn = await satu(conn, 'SELECT akun_id FROM pajak WHERE id = ?', [po.pajak_ppn_id]);
-    baris.push({ akun_id: pajakPpn.akun_id, debit: f.ppn, kredit: 0, keterangan: `PPN faktur ${f.nomor_faktur}` });
+    const p = await ambilPengaturan(conn);
+    if (p.ppn_dapat_dikreditkan === '1') {
+      const pajakPpn = await satu(conn, 'SELECT akun_id FROM pajak WHERE id = ?', [po.pajak_ppn_id]);
+      baris.push({ akun_id: pajakPpn.akun_id, debit: f.ppn, kredit: 0, keterangan: `PPN faktur ${f.nomor_faktur}` });
+    } else {
+      // Fakultas bukan PKP: PPN yang dibayar tidak dapat dikreditkan sehingga menjadi bagian biaya setiap baris.
+      bagiProporsional(f.ppn, baris.map((b) => b.debit)).forEach((x, i) => {
+        baris[i].debit = tambah(baris[i].debit, x);
+      });
+    }
   }
   baris.push({ akun_id: utangUsaha.id, pemasok_id: f.pemasok_id, debit: 0, kredit: f.total_utang, keterangan: `Faktur ${f.nomor_faktur}` });
   if (keSen(f.pph) > 0) {
@@ -275,13 +283,13 @@ export async function batalFaktur(conn, ctx, fakturId, alasan) {
   if (!alasan?.trim()) throw galatMasukan('Alasan pembatalan wajib diisi.', { alasan: 'Wajib diisi.' });
   const f = await kunciBaris(conn, 'faktur_pemasok', fakturId, 'Faktur');
   if (['DRAFT', 'DITOLAK', 'MENUNGGU_PERSETUJUAN'].includes(f.status)) {
-    if (!punya(ctx.user, 'AKUNTANSI', 'SPV_AKUNTANSI')) throw galatAkses();
+    if (!punya(ctx.user, 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN')) throw galatAkses();
     if (f.status === 'MENUNGGU_PERSETUJUAN') {
       await batalkanPersetujuan(conn, 'FB', fakturId);
       await lepasTagihanPO(conn, fakturId);
     }
   } else if (f.status === 'TERVERIFIKASI') {
-    if (!punya(ctx.user, 'SPV_AKUNTANSI')) throw galatAkses('Faktur terverifikasi hanya dapat dibatalkan Kepala Bagian Akuntansi.');
+    if (!punya(ctx.user, 'KASUBAG_KEUANGAN')) throw galatAkses('Faktur terverifikasi hanya dapat dibatalkan Kepala Bagian Akuntansi.');
     if (keSen(f.terbayar) > 0) throw galatKonflik('Faktur sudah ada pembayaran sehingga tidak dapat dibatalkan.');
     const aktif = await satu(
       conn,
@@ -386,20 +394,20 @@ export async function detailFaktur(db, user, fakturId) {
 router.get('/faktur/:id', perlu(...PERAN_LIHAT), async (req, res) => {
   res.json(await detailFaktur(pool, req.user, Number(req.params.id)));
 });
-router.post('/faktur', perlu('AKUNTANSI'), async (req, res) => {
+router.post('/faktur', perlu('STAF_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatFaktur(conn, req.ctx, req.body)));
 });
-router.post('/faktur/saldo-awal', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/faktur/saldo-awal', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatFakturSaldoAwal(conn, req.ctx, req.body)));
 });
-router.put('/faktur/:id', perlu('AKUNTANSI'), async (req, res) => {
+router.put('/faktur/:id', perlu('STAF_KEUANGAN'), async (req, res) => {
   await tx((conn) => ubahFaktur(conn, req.ctx, Number(req.params.id), req.body));
   res.json({ ok: true });
 });
-router.post('/faktur/:id/verifikasi', perlu('AKUNTANSI'), async (req, res) => {
+router.post('/faktur/:id/verifikasi', perlu('STAF_KEUANGAN'), async (req, res) => {
   res.json(await tx((conn) => verifikasiFaktur(conn, req.ctx, Number(req.params.id))));
 });
-router.post('/faktur/:id/batal', perlu('AKUNTANSI', 'SPV_AKUNTANSI'), async (req, res) => {
+router.post('/faktur/:id/batal', perlu('STAF_KEUANGAN', 'KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => batalFaktur(conn, req.ctx, Number(req.params.id), req.body?.alasan));
   res.json({ ok: true });
 });

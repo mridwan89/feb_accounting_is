@@ -76,8 +76,8 @@ export function DaftarRekonsiliasi() {
     <>
       <Kepala
         judul="Rekonsiliasi bank"
-        sub="Disusun Kepala Bagian Akuntansi, bukan Kasir, sehingga pencatat pembayaran tidak mencocokkan pekerjaannya sendiri."
-        aksi={punya('SPV_AKUNTANSI') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm(true)}>Buat rekonsiliasi</Tombol>}
+        sub="Disusun Kepala Subbagian Keuangan, bukan Kasir, sehingga pencatat pembayaran tidak mencocokkan pekerjaannya sendiri."
+        aksi={punya('KASUBAG_KEUANGAN') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm(true)}>Buat rekonsiliasi</Tombol>}
       />
       <Muat kueri={q}>
         {(data) => (
@@ -286,7 +286,7 @@ export function DetailRekonsiliasi() {
   return (
     <Muat kueri={q}>
       {(r) => {
-        const boleh = punya('SPV_AKUNTANSI') && !punya('KASIR') && r.status === 'DRAFT';
+        const boleh = punya('KASUBAG_KEUANGAN') && !punya('KASIR') && r.status === 'DRAFT';
         const selisih = Number(r.selisih);
         const finalkan = async () => {
           const ok = await konfirmasi({
@@ -392,7 +392,7 @@ export function DetailRekonsiliasi() {
                 </div>
               )}
             </Kartu>
-            <PanelLampiran jenis="RB" id={r.id} bolehUnggah={punya('SPV_AKUNTANSI') && r.status === 'DRAFT'} bolehHapus={r.status === 'DRAFT'} judul="Rekening koran" />
+            <PanelLampiran jenis="RB" id={r.id} bolehUnggah={punya('KASUBAG_KEUANGAN') && r.status === 'DRAFT'} bolehHapus={r.status === 'DRAFT'} judul="Rekening koran" />
           </>
         );
       }}

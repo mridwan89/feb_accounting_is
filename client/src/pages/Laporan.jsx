@@ -23,8 +23,8 @@ export const KATALOG = [
   { kode: 'LAP-09', rute: 'uang-muka-beredar', judul: 'Uang muka beredar', ket: 'Uang muka yang sudah dibayar dan belum selesai dipertanggungjawabkan.', peran: PERAN_LAPORAN },
   { kode: 'LAP-10', rute: 'buku-besar', judul: 'Buku besar', ket: 'Mutasi per akun beserta saldo berjalan.', peran: PERAN_LAPORAN },
   { kode: 'LAP-11', rute: 'neraca-saldo', judul: 'Neraca saldo', ket: 'Saldo seluruh akun per tanggal tertentu dan pemeriksaan keseimbangan.', peran: PERAN_LAPORAN },
-  { kode: 'LAP-12', rute: 'pengeluaran-departemen', judul: 'Pengeluaran per departemen', ket: 'Beban per departemen dan akun pada rentang tanggal.', peran: PERAN_LAPORAN },
-  { kode: 'LAP-13', rute: 'pengecualian', judul: 'Laporan pengecualian', ket: 'Selisih yang disetujui, pembatalan, penolakan, keterlambatan, dan perubahan data sensitif.', peran: ['AUDITOR', 'MANAJER_KEUANGAN', 'DIREKTUR', 'SPV_AKUNTANSI'] },
+  { kode: 'LAP-12', rute: 'pengeluaran-departemen', judul: 'Pengeluaran per unit kerja', ket: 'Beban per unit kerja dan akun pada rentang tanggal.', peran: PERAN_LAPORAN },
+  { kode: 'LAP-13', rute: 'pengecualian', judul: 'Laporan pengecualian', ket: 'Selisih yang disetujui, pembatalan, penolakan, keterlambatan, dan perubahan data sensitif.', peran: ['AUDITOR', 'WAKIL_DEKAN_2', 'DEKAN', 'KASUBAG_KEUANGAN'] },
 ];
 
 export function HalamanLaporan() {
@@ -104,7 +104,7 @@ function unduhCsv(nama, kolom, data) {
 }
 
 function Kerangka({ info, periode, filter, csv, children }) {
-  const { perusahaan } = useAuth();
+  const { institusi } = useAuth();
   return (
     <div className="laporan">
       <Kepala
@@ -125,7 +125,7 @@ function Kerangka({ info, periode, filter, csv, children }) {
         }
       />
       <div className="kop-laporan hanya-cetak">
-        <div className="nama">{perusahaan.perusahaan_nama}</div>
+        <div className="nama">{[institusi.institusi_nama, institusi.institusi_induk].filter(Boolean).join(' ')}</div>
         <div className="judul">
           {info.kode} {info.judul}
         </div>
@@ -608,7 +608,7 @@ function UangMukaBeredar({ info }) {
   const kolom = [
     { kunci: 'nomor', label: 'Nomor', tampil: (b) => <Link to={`/uang-muka/${b.id}`}>{b.nomor}</Link> },
     { kunci: 'pemohon', label: 'Pemohon' },
-    { kunci: 'departemen_nama', label: 'Departemen' },
+    { kunci: 'departemen_nama', label: 'Unit kerja' },
     { kunci: 'keperluan', label: 'Keperluan' },
     { kunci: 'tanggal_bayar', label: 'Dibayar', tanggal: true, nowrap: true },
     { kunci: 'umur_hari', label: 'Umur (hari)', angka: true },
@@ -720,7 +720,7 @@ function PengeluaranDepartemen({ info }) {
   const { saring, nilai, periode } = useRentang();
   const q = useApi(`/laporan/pengeluaran-departemen${qs(nilai)}`);
   const kolom = [
-    { kunci: 'departemen_nama', label: 'Departemen' },
+    { kunci: 'departemen_nama', label: 'Unit kerja' },
     { kunci: 'akun_kode', label: 'Kode akun' },
     { kunci: 'akun_nama', label: 'Nama akun' },
     { kunci: 'jumlah', label: 'Jumlah', uang: true },
@@ -742,7 +742,7 @@ function PengeluaranDepartemen({ info }) {
                 }
               />
             </Kartu>
-            <Kartu judul="Beban per departemen">
+            <Kartu judul="Beban per unit kerja">
               <GrafikBatangH data={r.per_departemen.map((d) => ({ label: d.departemen_nama, nilai: Number(d.jumlah), warna: '#2a78d6' }))} />
             </Kartu>
           </div>

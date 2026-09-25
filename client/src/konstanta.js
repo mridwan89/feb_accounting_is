@@ -85,9 +85,9 @@ export const RUTE_DOKUMEN = {
   RB: '/rekonsiliasi',
 };
 
-export const PERAN_KEUANGAN = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'KASIR', 'AUDITOR'];
-export const PERAN_LAPORAN = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR'];
-export const PERAN_PENYETUJU = ['KEPALA_DEPT', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR'];
+export const PERAN_KEUANGAN = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'KASIR', 'AUDITOR'];
+export const PERAN_LAPORAN = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR'];
+export const PERAN_PENYETUJU = ['PIMPINAN_UNIT', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN'];
 
 /** Menu samping: setiap butir hanya tampil untuk peran yang disebut (kosong = semua pengguna). */
 export const MENU = [
@@ -96,17 +96,17 @@ export const MENU = [
     judul: 'Permintaan',
     butir: [
       { label: 'Permintaan saya', ke: '/permintaan', ikon: 'daftar', peran: ['PEMOHON'] },
-      { label: 'Permintaan pembayaran', ke: '/pp', ikon: 'dokumen', peran: ['PEMOHON', ...PERAN_KEUANGAN, 'KEPALA_DEPT'] },
-      { label: 'Uang muka kerja', ke: '/uang-muka', ikon: 'dompet', peran: ['PEMOHON', ...PERAN_KEUANGAN, 'KEPALA_DEPT'] },
-      { label: 'Pertanggungjawaban', ke: '/pjum', ikon: 'centang', peran: ['PEMOHON', ...PERAN_KEUANGAN, 'KEPALA_DEPT'] },
-      { label: 'Pengeluaran kas kecil', ke: '/pkk', ikon: 'koin', peran: ['PEMOHON', 'KAS_KECIL', ...PERAN_KEUANGAN, 'KEPALA_DEPT'] },
+      { label: 'Permintaan pembayaran', ke: '/pp', ikon: 'dokumen', peran: ['PEMOHON', ...PERAN_KEUANGAN, 'PIMPINAN_UNIT'] },
+      { label: 'Uang muka kerja', ke: '/uang-muka', ikon: 'dompet', peran: ['PEMOHON', ...PERAN_KEUANGAN, 'PIMPINAN_UNIT'] },
+      { label: 'Pertanggungjawaban', ke: '/pjum', ikon: 'centang', peran: ['PEMOHON', ...PERAN_KEUANGAN, 'PIMPINAN_UNIT'] },
+      { label: 'Pengeluaran kas kecil', ke: '/pkk', ikon: 'koin', peran: ['PEMOHON', 'KAS_KECIL', ...PERAN_KEUANGAN, 'PIMPINAN_UNIT'] },
     ],
   },
   {
     judul: 'Pembelian',
     butir: [
-      { label: 'Pesanan pembelian', ke: '/po', ikon: 'keranjang', peran: ['PEMBELIAN', 'GUDANG', 'KEPALA_DEPT', ...PERAN_KEUANGAN] },
-      { label: 'Penerimaan barang', ke: '/penerimaan', ikon: 'kotak', peran: ['PEMBELIAN', 'GUDANG', 'KEPALA_DEPT', ...PERAN_KEUANGAN] },
+      { label: 'Pesanan pembelian', ke: '/po', ikon: 'keranjang', peran: ['PEMBELIAN', 'GUDANG', 'PIMPINAN_UNIT', ...PERAN_KEUANGAN] },
+      { label: 'Penerimaan barang', ke: '/penerimaan', ikon: 'kotak', peran: ['PEMBELIAN', 'GUDANG', 'PIMPINAN_UNIT', ...PERAN_KEUANGAN] },
       { label: 'Pemasok', ke: '/pemasok', ikon: 'gedung', peran: ['PEMBELIAN', 'GUDANG', ...PERAN_KEUANGAN] },
     ],
   },
@@ -117,7 +117,7 @@ export const MENU = [
       { label: 'Bukti kas keluar', ke: '/bkk', ikon: 'keluar', peran: PERAN_KEUANGAN },
       { label: 'Pembayaran', ke: '/pembayaran', ikon: 'bayar', peran: PERAN_KEUANGAN },
       { label: 'Bukti kas masuk', ke: '/bkm', ikon: 'masuk', peran: PERAN_KEUANGAN },
-      { label: 'Buku cek dan BG', ke: '/buku-cek', ikon: 'cek', peran: ['KASIR', 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR'] },
+      { label: 'Buku cek dan BG', ke: '/buku-cek', ikon: 'cek', peran: ['KASIR', 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR'] },
       { label: 'Rekonsiliasi bank', ke: '/rekonsiliasi', ikon: 'timbang', peran: PERAN_LAPORAN },
     ],
   },
@@ -126,7 +126,7 @@ export const MENU = [
     butir: [
       { label: 'Dana kas kecil', ke: '/dana-kas-kecil', ikon: 'brankas', peran: ['KAS_KECIL', ...PERAN_KEUANGAN] },
       { label: 'Pengisian kembali', ke: '/pdk', ikon: 'isi', peran: ['KAS_KECIL', ...PERAN_KEUANGAN] },
-      { label: 'Opname kas kecil', ke: '/opname', ikon: 'hitung', peran: ['KAS_KECIL', 'AUDITOR', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR'] },
+      { label: 'Opname kas kecil', ke: '/opname', ikon: 'hitung', peran: ['KAS_KECIL', 'AUDITOR', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN'] },
     ],
   },
   {
@@ -144,15 +144,15 @@ export const MENU = [
       { label: 'Bagan akun', ke: '/akun', ikon: 'daftar', peran: [...PERAN_LAPORAN, 'ADMIN'] },
       { label: 'Kode pajak', ke: '/pajak', ikon: 'persen', peran: [...PERAN_LAPORAN, 'ADMIN'] },
       { label: 'Rekening bank', ke: '/rekening-kas', ikon: 'bank', peran: [...PERAN_KEUANGAN, 'ADMIN'] },
-      { label: 'Departemen', ke: '/departemen', ikon: 'orang', peran: ['ADMIN', ...PERAN_LAPORAN] },
+      { label: 'Unit kerja', ke: '/departemen', ikon: 'orang', peran: ['ADMIN', ...PERAN_LAPORAN] },
     ],
   },
   {
     judul: 'Administrasi',
     butir: [
-      { label: 'Pengguna', ke: '/admin/pengguna', ikon: 'orang', peran: ['ADMIN', 'AUDITOR', 'MANAJER_KEUANGAN'] },
-      { label: 'Aturan persetujuan', ke: '/admin/aturan-persetujuan', ikon: 'tangga', peran: ['ADMIN', 'AUDITOR', 'MANAJER_KEUANGAN', 'DIREKTUR'] },
-      { label: 'Konflik peran', ke: '/admin/konflik-peran', ikon: 'perisai', peran: ['ADMIN', 'AUDITOR', 'MANAJER_KEUANGAN'] },
+      { label: 'Pengguna', ke: '/admin/pengguna', ikon: 'orang', peran: ['ADMIN', 'AUDITOR', 'WAKIL_DEKAN_2'] },
+      { label: 'Aturan persetujuan', ke: '/admin/aturan-persetujuan', ikon: 'tangga', peran: ['ADMIN', 'AUDITOR', 'WAKIL_DEKAN_2', 'DEKAN'] },
+      { label: 'Konflik peran', ke: '/admin/konflik-peran', ikon: 'perisai', peran: ['ADMIN', 'AUDITOR', 'WAKIL_DEKAN_2'] },
       { label: 'Pengaturan', ke: '/admin/pengaturan', ikon: 'gerigi', peran: ['ADMIN'] },
       { label: 'Log audit', ke: '/admin/audit', ikon: 'jejak', peran: ['ADMIN', 'AUDITOR'] },
       { label: 'Sesi aktif', ke: '/admin/sesi', ikon: 'layar', peran: ['ADMIN'] },

@@ -15,7 +15,7 @@ import { akunSistem } from '../lib/pengaturan.js';
 
 export const router = Router();
 
-const PERAN_LIHAT = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR'];
+const PERAN_LIHAT = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR'];
 
 daftarkanDokumen('JM', {
   tabel: 'jurnal_manual',
@@ -125,7 +125,7 @@ const skemaJM = z.object({
 });
 
 async function susunJM(conn, ctx, data) {
-  if (data.jenis === 'SALDO_AWAL' && !punya(ctx.user, 'SPV_AKUNTANSI')) throw galatAkses('Jurnal saldo awal hanya dibuat Kepala Bagian Akuntansi.');
+  if (data.jenis === 'SALDO_AWAL' && !punya(ctx.user, 'KASUBAG_KEUANGAN')) throw galatAkses('Jurnal saldo awal hanya dibuat Kepala Bagian Akuntansi.');
   const galat = {};
   let debit = 0;
   let kredit = 0;
@@ -244,17 +244,17 @@ router.get('/jurnal-manual/:id', perlu(...PERAN_LIHAT), async (req, res) => {
   });
 });
 
-router.post('/jurnal-manual', perlu('AKUNTANSI', 'SPV_AKUNTANSI'), async (req, res) => {
+router.post('/jurnal-manual', perlu('STAF_KEUANGAN', 'KASUBAG_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatJM(conn, req.ctx, req.body)));
 });
-router.put('/jurnal-manual/:id', perlu('AKUNTANSI', 'SPV_AKUNTANSI'), async (req, res) => {
+router.put('/jurnal-manual/:id', perlu('STAF_KEUANGAN', 'KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => ubahJM(conn, req.ctx, Number(req.params.id), req.body));
   res.json({ ok: true });
 });
-router.post('/jurnal-manual/:id/ajukan', perlu('AKUNTANSI', 'SPV_AKUNTANSI'), async (req, res) => {
+router.post('/jurnal-manual/:id/ajukan', perlu('STAF_KEUANGAN', 'KASUBAG_KEUANGAN'), async (req, res) => {
   res.json(await tx((conn) => ajukanJM(conn, req.ctx, Number(req.params.id))));
 });
-router.post('/jurnal-manual/:id/batal', perlu('AKUNTANSI', 'SPV_AKUNTANSI'), async (req, res) => {
+router.post('/jurnal-manual/:id/batal', perlu('STAF_KEUANGAN', 'KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => batalJM(conn, req.ctx, Number(req.params.id), req.body?.alasan));
   res.json({ ok: true });
 });

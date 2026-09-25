@@ -22,6 +22,8 @@ export default defineConfig({
     { name: 'chromium', testDir: './tests', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
     // Cangkang Electron diuji sesudah skenario peramban; di Linux tanpa layar jalankan dengan xvfb-run.
     { name: 'desktop', testDir: './tests-desktop', dependencies: ['chromium'] },
+    // Tangkapan layar manual pengguna; hanya dijalankan lewat npm run tangkapan (tidak termasuk npm test).
+    { name: 'tangkapan', testDir: './tangkapan', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } } },
   ],
   webServer: {
     // Data demo dibuat ulang lebih dulu, baru server dinyalakan.

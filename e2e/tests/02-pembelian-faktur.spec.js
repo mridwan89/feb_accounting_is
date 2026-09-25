@@ -8,8 +8,8 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
   let nomorPO;
   let urlFakturSelisih;
 
-  test('staf pembelian membuat PO dua baris untuk pemasok non-PKP dan mengajukannya', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'beli1');
+  test('staf pengadaan membuat PO dua baris untuk pemasok non-PKP dan mengajukannya', async ({ browser }) => {
+    const { page, tutup } = await sebagai(browser, 'pengadaan1');
     await page.goto('/po/baru');
     await pilihKombo(page.getByLabel('Pemasok', { exact: true }), 'Sumber Alat');
     await expect(page.getByText('CV Sumber Alat Tulis: bukan PKP')).toBeVisible();
@@ -37,8 +37,8 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
     await tutup();
   });
 
-  test('kepala departemen pembelian menyetujui PO', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'kabeli');
+  test('kepala tata usaha menyetujui PO', async ({ browser }) => {
+    const { page, tutup } = await sebagai(browser, 'katu');
     await page.goto('/persetujuan');
     await page.getByRole('row', { name: pola(nomorPO) }).click();
     await setujui(page);
@@ -46,8 +46,8 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
     await tutup();
   });
 
-  test('gudang tidak dapat menerima melebihi pesanan, lalu mencatat penerimaan penuh', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'gudang1');
+  test('penerima barang tidak dapat menerima melebihi pesanan, lalu mencatat penerimaan penuh', async ({ browser }) => {
+    const { page, tutup } = await sebagai(browser, 'rt1');
     await page.goto(`/penerimaan/baru?po_id=${idPO}`);
     await page.getByLabel('Nomor surat jalan').fill('SJ-E2E-001');
     await page.getByLabel('Diterima sekarang Map plastik kancing').fill('120');
@@ -64,7 +64,7 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
   });
 
   test('faktur yang cocok dengan PO dan LPB langsung diposting menjadi utang', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'akt1');
+    const { page, tutup } = await sebagai(browser, 'stafkeu1');
     await page.goto(`/faktur/baru?po_id=${idPO}`);
     await page.getByLabel('Nomor faktur pemasok').fill('SAT-E2E-01');
     await page.getByLabel('Tagih Amplop cokelat folio', { exact: true }).uncheck();
@@ -79,7 +79,7 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
   });
 
   test('nomor faktur yang sama dari pemasok yang sama ditolak', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'akt1');
+    const { page, tutup } = await sebagai(browser, 'stafkeu1');
     await page.goto(`/faktur/baru?po_id=${idPO}`);
     await page.getByLabel('Nomor faktur pemasok').fill('sat e2e 01');
     await page.getByRole('button', { name: 'Simpan faktur' }).click();
@@ -87,8 +87,8 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
     await tutup();
   });
 
-  test('faktur yang menagih melebihi penerimaan menunggu keputusan Manajer Keuangan', async ({ browser }) => {
-    const akt = await sebagai(browser, 'akt1');
+  test('faktur yang menagih melebihi penerimaan menunggu keputusan Wakil Dekan II', async ({ browser }) => {
+    const akt = await sebagai(browser, 'stafkeu1');
     const { page } = akt;
     await page.goto(`/faktur/baru?po_id=${idPO}`);
     await page.getByLabel('Nomor faktur pemasok').fill('SAT-E2E-02');
@@ -101,7 +101,7 @@ test.describe.serial('Pembelian dan pencocokan faktur tiga arah', () => {
     urlFakturSelisih = page.url();
     await akt.tutup();
 
-    const mk = await sebagai(browser, 'mankeu');
+    const mk = await sebagai(browser, 'wd2');
     await mk.page.goto(urlFakturSelisih);
     await expect(mk.page.locator('.pesan.peringatan')).toContainText('ditagih 60');
     await setujui(mk.page, 'Pemasok mengirim tambahan 10 pak sesuai konfirmasi Gudang');

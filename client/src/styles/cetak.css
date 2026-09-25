@@ -23,7 +23,9 @@
 
 /* kop dan judul */
 .kop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 8px; }
-.kop .nama { font-size: 13.5pt; font-weight: 700; }
+.kop .induk { font-size: 11pt; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+.kop .nama { font-size: 13.5pt; font-weight: 700; text-transform: uppercase; }
+.kop .subjudul { font-size: 8.5pt; color: #222; margin-top: 1px; }
 .kop .alamat { font-size: 8.5pt; color: #333; }
 .tanda-cetak { border: 1.5px solid #111; padding: 3px 10px; font-weight: 700; font-size: 9.5pt; letter-spacing: 0.08em; text-align: center; white-space: nowrap; }
 .tanda-cetak.pratinjau { border-style: dashed; color: #666; }

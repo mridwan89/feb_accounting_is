@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { angka, hariIni, hitungPajak, jumlahkan, kali, rupiah, tambahHari, tanggal } from '../format.js';
+import { angka, hariIni, hitungPajak, jumlahkan, kali, rupiah, tambahHari, tanggal, tarifEfektif } from '../format.js';
 import { useAksi, useApi, usePajak, usePilihanPemasok } from '../components/data.js';
 import { SaringDaftar, useAksiDokumen, useSaring } from '../components/Dokumen.jsx';
 import { PanelLampiran } from '../components/Lampiran.jsx';
@@ -36,8 +36,8 @@ export function DaftarFaktur() {
         sub="Register utang usaha: setiap faktur dicocokkan dengan PO dan penerimaan sebelum diposting."
         aksi={
           <>
-            {punya('SPV_AKUNTANSI') && <TautanTombol ke="/faktur/saldo-awal">Faktur saldo awal</TautanTombol>}
-            {punya('AKUNTANSI') && <TautanTombol ke="/faktur/baru" varian="utama" ikon="tambah">Catat faktur</TautanTombol>}
+            {punya('KASUBAG_KEUANGAN') && <TautanTombol ke="/faktur/saldo-awal">Faktur saldo awal</TautanTombol>}
+            {punya('STAF_KEUANGAN') && <TautanTombol ke="/faktur/baru" varian="utama" ikon="tambah">Catat faktur</TautanTombol>}
           </>
         }
       />
@@ -122,7 +122,7 @@ function FormFaktur({ po, awal, id }) {
   const dasarPph = jumlahkan(terpilih.filter((b) => b.jenis === 'JASA'), (b) => kali(baris[b.id].qty, baris[b.id].harga));
   const ppn = kenaPpn ? (v.ppn === '' ? hitungPajak(dpp, tarifPpn) : Number(v.ppn)) : 0;
   const kodePph = (pajak.data || []).find((p) => String(p.id) === String(v.pajak_pph_id));
-  const tarifPph = kodePph ? Number(kodePph.tarif) * (kodePph.naik_tanpa_npwp && !po.pemasok.npwp ? 2 : 1) : 0;
+  const tarifPph = kodePph ? tarifEfektif(kodePph, !po.pemasok.npwp) : 0;
   const pph = kodePph ? hitungPajak(dasarPph, tarifPph) : 0;
   const tagihan = dpp + ppn;
 
@@ -252,7 +252,7 @@ function FormFaktur({ po, awal, id }) {
         {adaSelisih && (
           <div style={{ padding: '12px 16px 0' }}>
             <Pesan jenis="peringatan">
-              Ada baris yang tidak cocok dengan PO atau penerimaan. Faktur tetap dapat dicatat, tetapi setelah verifikasi harus disetujui Manajer Keuangan sebelum menjadi utang.
+              Ada baris yang tidak cocok dengan PO atau penerimaan. Faktur tetap dapat dicatat, tetapi setelah verifikasi harus disetujui Wakil Dekan II sebelum menjadi utang.
             </Pesan>
           </div>
         )}
@@ -387,17 +387,17 @@ export function DetailFaktur() {
 function IsiDetailFaktur({ fb }) {
   const { punya } = useAuth();
   const aksi = useAksiDokumen('/faktur', fb.id, 'Faktur');
-  const bisaUbah = punya('AKUNTANSI') && ['DRAFT', 'DITOLAK'].includes(fb.status) && fb.jenis === 'PO';
+  const bisaUbah = punya('STAF_KEUANGAN') && ['DRAFT', 'DITOLAK'].includes(fb.status) && fb.jenis === 'PO';
   const bisaBatal =
-    (['DRAFT', 'DITOLAK', 'MENUNGGU_PERSETUJUAN'].includes(fb.status) && punya('AKUNTANSI', 'SPV_AKUNTANSI')) ||
-    (fb.status === 'TERVERIFIKASI' && punya('SPV_AKUNTANSI') && Number(fb.terbayar) === 0);
+    (['DRAFT', 'DITOLAK', 'MENUNGGU_PERSETUJUAN'].includes(fb.status) && punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN')) ||
+    (fb.status === 'TERVERIFIKASI' && punya('KASUBAG_KEUANGAN') && Number(fb.terbayar) === 0);
   const terbuka = ['TERVERIFIKASI', 'DIBAYAR_SEBAGIAN'].includes(fb.status);
   const verifikasi = () =>
     aksi.jalankan(() => api.post(`/faktur/${fb.id}/verifikasi`), {
       sukses: (h) =>
         h.hasil_cocok === 'COCOK'
           ? `Faktur cocok dengan PO dan penerimaan, lalu diposting ke jurnal ${h.jurnal}.`
-          : 'Ditemukan selisih pencocokan. Faktur menunggu persetujuan Manajer Keuangan.',
+          : 'Ditemukan selisih pencocokan. Faktur menunggu persetujuan Wakil Dekan II.',
     });
   return (
     <>
@@ -418,10 +418,10 @@ function IsiDetailFaktur({ fb }) {
                 Batalkan
               </Tombol>
             )}
-            {punya('AKUNTANSI') && terbuka && (
+            {punya('STAF_KEUANGAN') && terbuka && (
               <TautanTombol ke={`/bkk/baru?jenis=PEMBAYARAN_FAKTUR&pemasok_id=${fb.pemasok_id}`} varian="utama" ikon="keluar">Buat BKK pembayaran</TautanTombol>
             )}
-            {punya('AKUNTANSI') && ['DRAFT', 'DITOLAK'].includes(fb.status) && (
+            {punya('STAF_KEUANGAN') && ['DRAFT', 'DITOLAK'].includes(fb.status) && (
               <Tombol varian="utama" ikon="timbang" onClick={verifikasi} sibuk={aksi.sibuk}>
                 Verifikasi dan cocokkan
               </Tombol>
@@ -437,7 +437,7 @@ function IsiDetailFaktur({ fb }) {
       )}
       {['DRAFT', 'DITOLAK'].includes(fb.status) && (
         <Pesan jenis="info">
-          Faktur belum menjadi utang. Tekan Verifikasi dan cocokkan: bila cocok, faktur langsung diposting; bila berselisih, faktur diteruskan ke Manajer Keuangan.
+          Faktur belum menjadi utang. Tekan Verifikasi dan cocokkan: bila cocok, faktur langsung diposting; bila berselisih, faktur diteruskan ke Wakil Dekan II.
         </Pesan>
       )}
       {terbuka && fb.hari_lewat_jatuh_tempo > 0 && <Pesan jenis="galat">Faktur ini sudah lewat jatuh tempo {fb.hari_lewat_jatuh_tempo} hari.</Pesan>}
@@ -548,7 +548,7 @@ function IsiDetailFaktur({ fb }) {
         </div>
         <div>
           {(fb.persetujuan.length > 0 || fb.boleh_memutuskan) && <PanelPersetujuan jenis="FB" id={fb.id} riwayat={fb.persetujuan} boleh={fb.boleh_memutuskan} />}
-          <PanelLampiran jenis="FB" id={fb.id} bolehUnggah={fb.status !== 'BATAL' && punya('AKUNTANSI', 'SPV_AKUNTANSI')} bolehHapus={['DRAFT', 'DITOLAK'].includes(fb.status)} judul="Pindaian faktur dan faktur pajak" />
+          <PanelLampiran jenis="FB" id={fb.id} bolehUnggah={fb.status !== 'BATAL' && punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN')} bolehHapus={['DRAFT', 'DITOLAK'].includes(fb.status)} judul="Pindaian faktur dan faktur pajak" />
         </div>
       </div>
     </>

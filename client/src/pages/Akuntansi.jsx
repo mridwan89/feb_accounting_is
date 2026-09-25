@@ -188,7 +188,7 @@ export function DetailJurnal() {
                     <tr>
                       <th>No</th>
                       <th>Akun</th>
-                      <th>Departemen</th>
+                      <th>Unit kerja</th>
                       <th>Pemasok</th>
                       <th>Keterangan</th>
                       <th className="angka">Debit</th>
@@ -240,8 +240,8 @@ export function DaftarJM() {
     <>
       <Kepala
         judul="Bukti memorial"
-        sub="Jurnal manual untuk saldo awal, koreksi, dan penyesuaian. Setiap bukti memorial wajib disetujui Manajer Keuangan sebelum diposting."
-        aksi={punya('AKUNTANSI', 'SPV_AKUNTANSI') && <TautanTombol ke="/jurnal-manual/baru" varian="utama" ikon="tambah">Buat bukti memorial</TautanTombol>}
+        sub="Jurnal manual untuk saldo awal, koreksi, dan penyesuaian. Setiap bukti memorial wajib disetujui Wakil Dekan II sebelum diposting."
+        aksi={punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN') && <TautanTombol ke="/jurnal-manual/baru" varian="utama" ikon="tambah">Buat bukti memorial</TautanTombol>}
       />
       <Kartu rapat>
         <SaringDaftar saring={saring} cari={false} status={[['DRAFT', 'Draf'], ['DIAJUKAN', 'Diajukan'], ['DISETUJUI', 'Disetujui'], ['DITOLAK', 'Ditolak'], ['BATAL', 'Batal']]} />
@@ -322,7 +322,7 @@ function FormJM({ awal, id }) {
             <Masukan type="date" {...f.ikat('tanggal')} salah={!!f.galat.tanggal} />
           </Kolom>
           <Kolom label="Jenis" lebar={3}>
-            <Pilihan pilihan={Object.entries(JENIS_JM).filter(([k]) => k !== 'SALDO_AWAL' || punya('SPV_AKUNTANSI'))} {...f.ikat('jenis')} />
+            <Pilihan pilihan={Object.entries(JENIS_JM).filter(([k]) => k !== 'SALDO_AWAL' || punya('KASUBAG_KEUANGAN'))} {...f.ikat('jenis')} />
           </Kolom>
           <Kolom label="Keterangan" galat={f.galat.keterangan} lebar={6}>
             <Masukan {...f.ikat('keterangan')} salah={!!f.galat.keterangan} maxLength={500} placeholder="Alasan jurnal dan dokumen dasarnya" />
@@ -341,9 +341,9 @@ function FormJM({ awal, id }) {
             { kunci: 'akun_id', label: 'Akun', lebar: '26%', isi: (b, ubah, g) => <Kombo pilihan={akun} value={b.akun_id} onChange={(x) => ubah('akun_id', x)} salah={!!g} placeholder="Kode atau nama akun" /> },
             {
               kunci: 'departemen_id',
-              label: 'Departemen',
+              label: 'Unit kerja',
               lebar: 140,
-              isi: (b, ubah) => <Pilihan pilihan={(dept.data || []).map((d) => [d.id, d.kode])} kosong="-" value={b.departemen_id || ''} onChange={(e) => ubah('departemen_id', e.target.value)} aria-label="Departemen" />,
+              isi: (b, ubah) => <Pilihan pilihan={(dept.data || []).map((d) => [d.id, d.kode])} kosong="-" value={b.departemen_id || ''} onChange={(e) => ubah('departemen_id', e.target.value)} aria-label="Unit kerja" />,
             },
             { kunci: 'pemasok_id', label: 'Pemasok', lebar: '16%', isi: (b, ubah, g) => <Kombo pilihan={pemasok} value={b.pemasok_id} onChange={(x) => ubah('pemasok_id', x)} salah={!!g} placeholder="Untuk utang usaha" /> },
             { kunci: 'keterangan', label: 'Keterangan', isi: (b, ubah) => <Masukan value={b.keterangan} onChange={(e) => ubah('keterangan', e.target.value)} maxLength={255} aria-label="Keterangan baris" /> },
@@ -458,7 +458,7 @@ function IsiDetailJM({ m }) {
                 <tr>
                   <th>No</th>
                   <th>Akun</th>
-                  <th>Departemen</th>
+                  <th>Unit kerja</th>
                   <th>Pemasok</th>
                   <th>Keterangan</th>
                   <th className="angka">Debit</th>
@@ -492,7 +492,7 @@ function IsiDetailJM({ m }) {
         </Kartu>
         <div>
           <PanelPersetujuan jenis="JM" id={m.id} riwayat={m.persetujuan} boleh={m.boleh_memutuskan} />
-          <PanelLampiran jenis="JM" id={m.id} bolehUnggah={m.status !== 'BATAL' && punya('AKUNTANSI', 'SPV_AKUNTANSI')} bolehHapus={bisaUbah} judul="Dokumen dasar" />
+          <PanelLampiran jenis="JM" id={m.id} bolehUnggah={m.status !== 'BATAL' && punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN')} bolehHapus={bisaUbah} judul="Dokumen dasar" />
         </div>
       </div>
     </>
@@ -535,7 +535,7 @@ export function HalamanPeriode() {
 
   return (
     <>
-      <Kepala judul="Periode akuntansi" sub="Tutup buku bulanan mengunci periode dari posting. Pembukaan kembali hanya oleh Manajer Keuangan dengan alasan tertulis." />
+      <Kepala judul="Periode akuntansi" sub="Tutup buku bulanan mengunci periode dari posting. Pembukaan kembali hanya oleh Wakil Dekan II dengan alasan tertulis." />
       <div className="grid-2-1">
         <Kartu
           judul={`Daftar periksa tutup buku ${nama}`}
@@ -588,7 +588,7 @@ export function HalamanPeriode() {
                 </span>
               )}
             </div>
-            {punya('MANAJER_KEUANGAN') &&
+            {punya('WAKIL_DEKAN_2') &&
               (tutup ? (
                 <Tombol varian="bahaya" onClick={aksiBuka} sibuk={sibuk}>
                   Buka kembali periode

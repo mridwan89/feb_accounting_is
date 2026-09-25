@@ -14,11 +14,11 @@ import { ambilPengaturan } from '../lib/pengaturan.js';
 
 export const router = Router();
 
-const PERAN_LIHAT_PO = ['PEMBELIAN', 'GUDANG', 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR', 'KEPALA_DEPT', 'KASIR'];
+const PERAN_LIHAT_PO = ['PEMBELIAN', 'GUDANG', 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR', 'PIMPINAN_UNIT', 'KASIR'];
 
 function bolehLihatPO(user, po) {
-  if (punya(user, 'PEMBELIAN', 'GUDANG', 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR', 'KASIR')) return true;
-  if (punya(user, 'KEPALA_DEPT') && (po.departemen_id === user.departemen_id || po.departemen_pembuat_id === user.departemen_id)) return true;
+  if (punya(user, 'PEMBELIAN', 'GUDANG', 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR', 'KASIR')) return true;
+  if (punya(user, 'PIMPINAN_UNIT') && (po.departemen_id === user.departemen_id || po.departemen_pembuat_id === user.departemen_id)) return true;
   return po.dibuat_oleh === user.id;
 }
 
@@ -197,7 +197,7 @@ router.get('/po', perlu(...PERAN_LIHAT_PO), async (req, res) => {
   const q = req.query;
   const syarat = ['1 = 1'];
   const params = [];
-  if (!punya(req.user, 'PEMBELIAN', 'GUDANG', 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR', 'KASIR')) {
+  if (!punya(req.user, 'PEMBELIAN', 'GUDANG', 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR', 'KASIR')) {
     syarat.push('(po.departemen_id = ? OR u.departemen_id = ?)');
     params.push(req.user.departemen_id, req.user.departemen_id);
   }

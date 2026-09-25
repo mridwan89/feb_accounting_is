@@ -7,7 +7,7 @@ import { Ikon } from './Ikon.jsx';
 import { TautanTombol, Tombol } from './ui.jsx';
 
 export function Layout() {
-  const { pengguna, perusahaan, punya, keluar } = useAuth();
+  const { pengguna, institusi, punya, keluar } = useAuth();
   const navigate = useNavigate();
   const tugas = useApi(punya(PERAN_PENYETUJU) ? '/persetujuan/tugas' : null, { refetchInterval: 60_000 });
   const peranQ = useApi('/peran', { staleTime: Infinity });
@@ -47,7 +47,7 @@ export function Layout() {
       <div className="badan">
         <header className="atas">
           <div className="atas-kiri">
-            <span className="perusahaan">{perusahaan.perusahaan_nama}</span>
+            <span className="perusahaan">{[institusi.institusi_nama, institusi.institusi_induk].filter(Boolean).join(' ')}</span>
           </div>
           <div className="atas-kanan">
             <div className="pengguna-info" title={`Peran: ${pengguna.peran.map(namaPeran).join(', ')}`}>

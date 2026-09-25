@@ -49,6 +49,7 @@ const skemaPengguna = z.object({
   username: z.string().trim().regex(/^[A-Za-z0-9._-]{3,50}$/, 'Nama pengguna 3 sampai 50 karakter: huruf, angka, titik, garis bawah, atau tanda hubung.'),
   nama_lengkap: teks(100),
   jabatan: teksOpsional(100),
+  nomor_pegawai: teksOpsional(30),
   email: z.preprocess((v) => v || null, z.string().email('Format email belum benar.').max(100).nullable()),
   departemen_id: id(),
   peran: z.array(z.string()).min(1, 'Pilih minimal satu peran.'),
@@ -64,10 +65,10 @@ async function simpanPeran(conn, penggunaId, daftarPeran) {
   await jalankan(conn, 'INSERT INTO pengguna_peran (pengguna_id, peran_kode) VALUES ?', [[...new Set(daftarPeran)].map((p) => [penggunaId, p])]);
 }
 
-router.get('/pengguna', perlu('ADMIN', 'AUDITOR', 'MANAJER_KEUANGAN'), async (req, res) => {
+router.get('/pengguna', perlu('ADMIN', 'AUDITOR', 'WAKIL_DEKAN_2'), async (req, res) => {
   const rows = await semua(
     pool,
-    `SELECT u.id, u.username, u.nama_lengkap, u.jabatan, u.email, u.departemen_id, d.nama AS departemen_nama,
+    `SELECT u.id, u.username, u.nama_lengkap, u.jabatan, u.nomor_pegawai, u.email, u.departemen_id, d.nama AS departemen_nama,
             u.aktif, u.harus_ganti_password, u.terakhir_login, (u.terkunci_sampai > NOW()) AS terkunci,
             GROUP_CONCAT(pp.peran_kode ORDER BY pp.peran_kode) AS peran
        FROM pengguna u JOIN departemen d ON d.id = u.departemen_id
@@ -82,7 +83,7 @@ router.get('/pengguna/pilihan', async (req, res) => {
   const peran = req.query.peran ? String(req.query.peran) : null;
   const rows = await semua(
     pool,
-    `SELECT DISTINCT u.id, u.nama_lengkap, u.jabatan, u.departemen_id FROM pengguna u
+    `SELECT DISTINCT u.id, u.nama_lengkap, u.jabatan, u.nomor_pegawai, u.departemen_id FROM pengguna u
        LEFT JOIN pengguna_peran pp ON pp.pengguna_id = u.id
       WHERE u.aktif = 1 ${peran ? 'AND pp.peran_kode = ?' : ''} ORDER BY u.nama_lengkap`,
     peran ? [peran] : [],
@@ -100,9 +101,9 @@ export async function buatPengguna(conn, ctx, input) {
   }
   const res = await jalankan(
     conn,
-    `INSERT INTO pengguna (username, nama_lengkap, jabatan, email, departemen_id, password_hash, harus_ganti_password)
-     VALUES (?, ?, ?, ?, ?, ?, 1)`,
-    [data.username, data.nama_lengkap, data.jabatan, data.email, data.departemen_id, await hashSandi(data.password_awal)],
+    `INSERT INTO pengguna (username, nama_lengkap, jabatan, nomor_pegawai, email, departemen_id, password_hash, harus_ganti_password)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+    [data.username, data.nama_lengkap, data.jabatan, data.nomor_pegawai, data.email, data.departemen_id, await hashSandi(data.password_awal)],
   );
   await simpanPeran(conn, res.insertId, data.peran);
   const baru = await muatPengguna(conn, res.insertId);
@@ -125,8 +126,8 @@ router.put('/pengguna/:id', perlu('ADMIN'), async (req, res) => {
     }
     await jalankan(
       conn,
-      'UPDATE pengguna SET nama_lengkap = ?, jabatan = ?, email = ?, departemen_id = ?, aktif = ? WHERE id = ?',
-      [data.nama_lengkap, data.jabatan, data.email, data.departemen_id, data.aktif === false ? 0 : 1, penggunaId],
+      'UPDATE pengguna SET nama_lengkap = ?, jabatan = ?, nomor_pegawai = ?, email = ?, departemen_id = ?, aktif = ? WHERE id = ?',
+      [data.nama_lengkap, data.jabatan, data.nomor_pegawai, data.email, data.departemen_id, data.aktif === false ? 0 : 1, penggunaId],
     );
     await simpanPeran(conn, penggunaId, data.peran);
     if (data.aktif === false) {
@@ -221,7 +222,7 @@ router.get('/aturan-persetujuan', async (_req, res) => {
 async function simpanAturan(conn, ctx, idAturan, input) {
   const data = validasi(skemaAturan, input);
   if (data.lingkup === 'DEPARTEMEN' && !data.peran_pengganti_kode) {
-    throw galatMasukan('Langkah berlingkup departemen wajib punya peran pengganti.', { peran_pengganti_kode: 'Wajib diisi untuk lingkup departemen.' });
+    throw galatMasukan('Langkah berlingkup unit kerja wajib punya peran pengganti.', { peran_pengganti_kode: 'Wajib diisi untuk lingkup unit kerja.' });
   }
   const bentrok = await satu(
     conn,
@@ -415,12 +416,12 @@ export async function ubahStatusPeriode(conn, ctx, input, statusBaru) {
   });
 }
 
-router.post('/periode/tutup', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/periode/tutup', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   await tx((conn) => ubahStatusPeriode(conn, req.ctx, req.body, 'TUTUP'));
   res.json({ ok: true });
 });
 
-router.post('/periode/buka', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/periode/buka', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   await tx((conn) => ubahStatusPeriode(conn, req.ctx, req.body, 'BUKA'));
   res.json({ ok: true });
 });

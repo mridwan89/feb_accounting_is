@@ -1,7 +1,7 @@
 import { semua } from '../db.js';
 import { galatAkses } from './galat.js';
 
-export const PERAN_KEUANGAN = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'KASIR', 'AUDITOR'];
+export const PERAN_KEUANGAN = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'KASIR', 'AUDITOR'];
 
 /** Apakah pengguna memegang salah satu peran? */
 export const punya = (user, ...peran) => peran.flat().some((p) => user?.peran?.includes(p));
@@ -31,15 +31,15 @@ export async function namaPeran(db, kode) {
 export function bolehLihatPermintaan(user, doc) {
   if (punya(user, PERAN_KEUANGAN)) return true;
   if (doc.dibuat_oleh === user.id) return true;
-  if (punya(user, 'KEPALA_DEPT') && doc.departemen_id === user.departemen_id) return true;
-  if (punya(user, 'DIREKTUR')) return true;
+  if (punya(user, 'PIMPINAN_UNIT') && doc.departemen_id === user.departemen_id) return true;
+  if (punya(user, 'DEKAN')) return true;
   return false;
 }
 
 /** Potongan SQL untuk menyaring daftar dokumen permintaan sesuai hak lihat. */
 export function saringPermintaan(user, alias = 'd') {
   if (punya(user, PERAN_KEUANGAN)) return { sql: '1 = 1', params: [] };
-  if (punya(user, 'KEPALA_DEPT')) {
+  if (punya(user, 'PIMPINAN_UNIT')) {
     return { sql: `(${alias}.dibuat_oleh = ? OR ${alias}.departemen_id = ?)`, params: [user.id, user.departemen_id] };
   }
   return { sql: `${alias}.dibuat_oleh = ?`, params: [user.id] };

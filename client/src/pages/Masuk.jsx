@@ -6,7 +6,7 @@ import { useAuth } from '../auth.jsx';
 import { Kartu, Kepala, Kolom, Masukan, Pesan, Tombol, useToast } from '../components/ui.jsx';
 
 export function HalamanMasuk() {
-  const { masuk, pesan, perusahaan } = useAuth();
+  const { masuk, pesan, institusi } = useAuth();
   const [cari] = useSearchParams();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
@@ -50,7 +50,7 @@ export function HalamanMasuk() {
           <p>Setiap pembayaran berangkat dari dokumen sumber, melewati persetujuan berjenjang, dan meninggalkan jejak audit yang dapat ditelusuri.</p>
         </div>
         <div className="kecil" style={{ color: '#8fa1b8' }}>
-          {perusahaan?.perusahaan_nama || 'Sistem Informasi Akuntansi Pengeluaran Kas'}
+          {[institusi?.institusi_nama, institusi?.institusi_induk].filter(Boolean).join(' ') || 'Sistem Informasi Akuntansi Pengeluaran Kas'}
         </div>
       </div>
       <div className="panel-form">

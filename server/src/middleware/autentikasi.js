@@ -11,7 +11,7 @@ const RUTE_GANTI_SANDI = new Set(['/auth/saya', '/auth/ganti-sandi', '/auth/kelu
 export async function muatPengguna(db, id) {
   const u = await satu(
     db,
-    `SELECT u.id, u.username, u.nama_lengkap, u.jabatan, u.email, u.departemen_id, u.aktif, u.harus_ganti_password,
+    `SELECT u.id, u.username, u.nama_lengkap, u.jabatan, u.nomor_pegawai, u.email, u.departemen_id, u.aktif, u.harus_ganti_password,
             d.kode AS departemen_kode, d.nama AS departemen_nama
        FROM pengguna u JOIN departemen d ON d.id = u.departemen_id WHERE u.id = ?`,
     [id],

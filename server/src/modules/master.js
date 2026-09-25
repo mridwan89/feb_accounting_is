@@ -8,7 +8,7 @@ import { keSen, dariSen } from '../lib/uang.js';
 
 export const router = Router();
 
-const PERAN_LIHAT_KAS = ['KASIR', 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR'];
+const PERAN_LIHAT_KAS = ['KASIR', 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR'];
 
 // ---------------------------------------------------------------- departemen
 
@@ -37,7 +37,7 @@ router.put('/departemen/:id', perlu('ADMIN'), async (req, res) => {
   const data = validasi(skemaDepartemen.omit({ kode: true }), req.body);
   await tx(async (conn) => {
     const lama = await satu(conn, 'SELECT * FROM departemen WHERE id = ? FOR UPDATE', [req.params.id]);
-    if (!lama) throw galatTidakAda('Departemen tidak ditemukan.');
+    if (!lama) throw galatTidakAda('Unit kerja tidak ditemukan.');
     await jalankan(conn, 'UPDATE departemen SET nama = ?, aktif = ? WHERE id = ?', [data.nama, data.aktif === false ? 0 : 1, lama.id]);
     await catatAudit(conn, req.ctx, { aksi: 'UBAH', entitas: 'departemen', entitasId: lama.id, ringkasan: `Departemen ${lama.kode} diubah`, sebelum: lama, sesudah: data });
   });
@@ -79,7 +79,7 @@ async function periksaInduk(conn, indukId) {
   if (!induk || induk.tipe !== 'INDUK') throw galatMasukan('Akun induk harus bertipe induk.', { induk_id: 'Pilih akun bertipe induk.' });
 }
 
-router.post('/akun', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/akun', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   const data = validasi(skemaAkun, req.body);
   const hasil = await tx(async (conn) => {
     if (await satu(conn, 'SELECT id FROM akun WHERE kode = ?', [data.kode])) throw galatMasukan('Kode akun sudah dipakai.', { kode: 'Kode sudah dipakai.' });
@@ -95,7 +95,7 @@ router.post('/akun', perlu('SPV_AKUNTANSI'), async (req, res) => {
   res.status(201).json(hasil);
 });
 
-router.put('/akun/:id', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.put('/akun/:id', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   const data = validasi(skemaAkun, req.body);
   await tx(async (conn) => {
     const lama = await satu(conn, 'SELECT * FROM akun WHERE id = ? FOR UPDATE', [req.params.id]);
@@ -127,7 +127,7 @@ const skemaPajak = z.object({
   jenis: z.enum(['PPN', 'PPH']),
   tarif: z.coerce.number().min(0).max(100),
   akun_id: id(),
-  naik_tanpa_npwp: bool().optional(),
+  persen_naik_tanpa_npwp: z.coerce.number().min(0).max(200).optional(),
   aktif: bool().optional(),
 });
 
@@ -139,24 +139,24 @@ async function simpanPajak(conn, ctx, idPajak, input) {
   const data = validasi(skemaPajak, input);
   const akun = await satu(conn, "SELECT id FROM akun WHERE id = ? AND tipe = 'DETAIL'", [data.akun_id]);
   if (!akun) throw galatMasukan('Pilih akun detail.', { akun_id: 'Pilih akun detail.' });
-  const nilai = [data.kode, data.nama, data.jenis, data.tarif, data.akun_id, data.naik_tanpa_npwp ? 1 : 0, data.aktif === false ? 0 : 1];
+  const nilai = [data.kode, data.nama, data.jenis, data.tarif, data.akun_id, data.persen_naik_tanpa_npwp || 0, data.aktif === false ? 0 : 1];
   if (idPajak) {
     const lama = await satu(conn, 'SELECT * FROM pajak WHERE id = ? FOR UPDATE', [idPajak]);
     if (!lama) throw galatTidakAda('Kode pajak tidak ditemukan.');
-    await jalankan(conn, 'UPDATE pajak SET kode = ?, nama = ?, jenis = ?, tarif = ?, akun_id = ?, naik_tanpa_npwp = ?, aktif = ? WHERE id = ?', [...nilai, idPajak]);
+    await jalankan(conn, 'UPDATE pajak SET kode = ?, nama = ?, jenis = ?, tarif = ?, akun_id = ?, persen_naik_tanpa_npwp = ?, aktif = ? WHERE id = ?', [...nilai, idPajak]);
     await catatAudit(conn, ctx, { aksi: 'UBAH', entitas: 'pajak', entitasId: idPajak, ringkasan: `Pajak ${data.kode} diubah`, sebelum: lama, sesudah: data });
     return idPajak;
   }
   if (await satu(conn, 'SELECT id FROM pajak WHERE kode = ?', [data.kode])) throw galatMasukan('Kode pajak sudah dipakai.', { kode: 'Kode sudah dipakai.' });
-  const r = await jalankan(conn, 'INSERT INTO pajak (kode, nama, jenis, tarif, akun_id, naik_tanpa_npwp, aktif) VALUES (?, ?, ?, ?, ?, ?, ?)', nilai);
+  const r = await jalankan(conn, 'INSERT INTO pajak (kode, nama, jenis, tarif, akun_id, persen_naik_tanpa_npwp, aktif) VALUES (?, ?, ?, ?, ?, ?, ?)', nilai);
   await catatAudit(conn, ctx, { aksi: 'BUAT', entitas: 'pajak', entitasId: r.insertId, ringkasan: `Pajak ${data.kode}`, sesudah: data });
   return r.insertId;
 }
 
-router.post('/pajak', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/pajak', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   res.status(201).json({ id: await tx((conn) => simpanPajak(conn, req.ctx, null, req.body)) });
 });
-router.put('/pajak/:id', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.put('/pajak/:id', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => simpanPajak(conn, req.ctx, Number(req.params.id), req.body));
   res.json({ ok: true });
 });
@@ -295,7 +295,7 @@ export async function verifikasiRekeningPemasok(conn, ctx, idPemasok) {
   });
 }
 
-router.post('/pemasok/:id/verifikasi-rekening', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/pemasok/:id/verifikasi-rekening', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => verifikasiRekeningPemasok(conn, req.ctx, Number(req.params.id)));
   res.json({ ok: true });
 });
@@ -348,10 +348,10 @@ async function simpanRekening(conn, ctx, idRek, input) {
   return r.insertId;
 }
 
-router.post('/rekening-kas', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/rekening-kas', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   res.status(201).json({ id: await tx((conn) => simpanRekening(conn, req.ctx, null, req.body)) });
 });
-router.put('/rekening-kas/:id', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.put('/rekening-kas/:id', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   await tx((conn) => simpanRekening(conn, req.ctx, Number(req.params.id), req.body));
   res.json({ ok: true });
 });
@@ -559,10 +559,10 @@ async function simpanDana(conn, ctx, idDana, input) {
 
 export const buatDana = (conn, ctx, input) => simpanDana(conn, ctx, null, input);
 
-router.post('/dana-kas-kecil', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/dana-kas-kecil', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   res.status(201).json({ id: await tx((conn) => simpanDana(conn, req.ctx, null, req.body)) });
 });
-router.put('/dana-kas-kecil/:id', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.put('/dana-kas-kecil/:id', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   await tx((conn) => simpanDana(conn, req.ctx, Number(req.params.id), req.body));
   res.json({ ok: true });
 });

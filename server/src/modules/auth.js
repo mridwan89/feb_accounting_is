@@ -102,8 +102,8 @@ router.post('/auth/keluar', async (req, res) => {
 
 router.get('/auth/saya', async (req, res) => {
   const p = await ambilPengaturan(pool);
-  const perusahaan = Object.fromEntries(Object.entries(p).filter(([k]) => k.startsWith('perusahaan_')));
-  res.json({ pengguna: req.user, perusahaan, sesi_timeout_menit: Number(p.sesi_timeout_menit || 30) });
+  const institusi = Object.fromEntries(Object.entries(p).filter(([k]) => k.startsWith('institusi_')));
+  res.json({ pengguna: req.user, institusi, sesi_timeout_menit: Number(p.sesi_timeout_menit || 30) });
 });
 
 const skemaGanti = z.object({ password_lama: z.string().min(1), password_baru: z.string().min(1) });

@@ -68,7 +68,7 @@ export const BLANKO = {
     isi: () => (
       <>
         <Garis label="Tanggal" />
-        <Garis label="Pemohon dan departemen" />
+        <Garis label="Pemohon dan unit kerja" />
         <Garis label="Tanggal dibutuhkan" />
         <Garis label="Dibayarkan kepada" />
         <Garis label="Bank, nomor rekening, a.n." />
@@ -85,7 +85,7 @@ export const BLANKO = {
     isi: () => (
       <>
         <Garis label="Tanggal" />
-        <Garis label="Pemohon dan departemen" />
+        <Garis label="Pemohon dan unit kerja" />
         <Garis label="Keperluan" />
         <Garis label="" />
         <Garis label="Tanggal kegiatan selesai" />
@@ -103,11 +103,11 @@ export const BLANKO = {
       <>
         <Garis label="Tanggal" />
         <Garis label="Nomor uang muka" />
-        <Garis label="Pemohon dan departemen" />
+        <Garis label="Pemohon dan unit kerja" />
         <Garis label="Jumlah uang muka (Rp)" />
         <TabelKosong kolom={[['No', '10mm'], ['Tanggal', '24mm'], ['Uraian'], ['Akun', '32mm'], ['No. bukti', '26mm'], ['Jumlah (Rp)', '34mm']]} baris={10} />
         <Garis label="Selisih (Rp)" />
-        <Centang pilihan={['Pas', 'Sisa dikembalikan ke kas', 'Kekurangan dibayar perusahaan']} />
+        <Centang pilihan={['Pas', 'Sisa dikembalikan ke kas', 'Kekurangan dibayar fakultas']} />
       </>
     ),
     ttd: [['Pemohon'], ['Disetujui, atasan'], ['Diverifikasi, Akuntansi']],
@@ -119,7 +119,7 @@ export const BLANKO = {
         <Centang pilihan={['Permintaan (sebelum dibayar)', 'Bukti pengeluaran (sesudah dibayar)']} />
         <Garis label="Tanggal" />
         <Garis label="Dana kas kecil" />
-        <Garis label="Pemohon dan departemen" />
+        <Garis label="Pemohon dan unit kerja" />
         <Garis label="Keperluan" />
         <Garis label="Akun" />
         <Garis label="Jumlah (Rp)" />
@@ -147,7 +147,7 @@ export const BLANKO = {
         <Garis label="Nomor cek, BG, atau referensi" />
       </>
     ),
-    ttd: [['Dibuat, Akuntansi'], ['Diperiksa, Ka. Bag. Akuntansi'], ['Disetujui, Manajer Keuangan'], ['Disetujui, Direktur'], ['Dibayar, Kasir'], ['Diterima, penerima']],
+    ttd: [['Dibuat, Staf Keuangan'], ['Diperiksa, Kasubag Keuangan'], ['Disetujui, Wakil Dekan II'], ['Disetujui, Dekan'], ['Dibayar, Kasir'], ['Diterima, penerima']],
   },
   BKM: {
     judul: 'Bukti kas masuk',
@@ -212,7 +212,7 @@ export function HalamanBlanko() {
     <>
       <Kepala judul="Blanko formulir" sub="Formulir kosong untuk prosedur darurat bila server tidak dapat diakses lebih dari dua jam. Cetak persediaan secukupnya dan simpan di Bagian Keuangan." />
       <Pesan jenis="peringatan" judul="Prosedur darurat">
-        Hanya diaktifkan oleh Manajer Keuangan. Formulir diberi nomor DARURAT-TANGGAL-URUT, ditandatangani basah sesuai matriks otorisasi, lalu dientri ke SIAPKas paling lambat satu hari kerja setelah sistem pulih.
+        Hanya diaktifkan oleh Wakil Dekan II. Formulir diberi nomor DARURAT-TANGGAL-URUT, ditandatangani basah sesuai matriks otorisasi, lalu dientri ke SIAPKas paling lambat satu hari kerja setelah sistem pulih.
       </Pesan>
       <div className="katalog-laporan">
         {Object.entries(BLANKO).map(([kode, b]) => (
@@ -230,7 +230,7 @@ export function HalamanBlanko() {
 export function CetakBlanko() {
   const { jenis } = useParams();
   const navigate = useNavigate();
-  const { perusahaan } = useAuth();
+  const { institusi } = useAuth();
   const b = BLANKO[jenis];
   useEffect(() => {
     document.title = `Blanko ${jenis} | SIAPKas`;
@@ -259,7 +259,7 @@ export function CetakBlanko() {
           <div className="sub">Nomor SIAPKas setelah dientri: ....................................</div>
         </div>
         {b.isi()}
-        <TandaTangan kolom={b.ttd} kota={perusahaan.perusahaan_kota} />
+        <TandaTangan kolom={b.ttd} kota={institusi.institusi_kota} />
         <div className="cetak-kaki">
           <span>Formulir darurat. Wajib dientri ke SIAPKas paling lambat satu hari kerja setelah sistem pulih, dengan pindaian formulir ini sebagai lampiran.</span>
           <span>{jenis}</span>

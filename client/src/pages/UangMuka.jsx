@@ -19,7 +19,7 @@ const STATUS_UM = [
   ['DRAFT', 'Draf'], ['DIAJUKAN', 'Diajukan'], ['DISETUJUI', 'Disetujui'], ['DITOLAK', 'Ditolak'], ['DIPROSES', 'Diproses'], ['DIBAYAR', 'Dibayar'], ['SELESAI', 'Selesai'], ['BATAL', 'Batal'],
 ];
 const STATUS_PJ = [['DRAFT', 'Draf'], ['DIAJUKAN', 'Diajukan'], ['DISETUJUI', 'Disetujui'], ['DITOLAK', 'Ditolak'], ['SELESAI', 'Selesai'], ['BATAL', 'Batal']];
-const HASIL = { PAS: 'Pas, tidak ada selisih', SISA: 'Ada sisa yang dikembalikan', KURANG: 'Ada kekurangan yang dibayar perusahaan' };
+const HASIL = { PAS: 'Pas, tidak ada selisih', SISA: 'Ada sisa yang dikembalikan', KURANG: 'Ada kekurangan yang dibayar fakultas' };
 
 function useHariBatasPJ() {
   const q = useApi('/pengaturan', { staleTime: 300_000 });
@@ -215,7 +215,7 @@ function IsiDetailUangMuka({ um }) {
               butir={[
                 ['Tanggal permintaan', tanggal(um.tanggal, true)],
                 ['Pemohon', um.dibuat_nama],
-                ['Departemen', um.departemen_nama],
+                ['Unit kerja', um.departemen_nama],
                 ['Jumlah', rupiah(um.jumlah)],
                 ['Kegiatan selesai', tanggal(um.tanggal_selesai_kegiatan, true)],
                 ['Tenggat pertanggungjawaban', tanggal(um.tanggal_batas_pj, true)],
@@ -231,7 +231,7 @@ function IsiDetailUangMuka({ um }) {
         </div>
         <div>
           <PanelPersetujuan jenis="PUM" id={um.id} riwayat={um.persetujuan} boleh={um.boleh_memutuskan} />
-          <PanelLampiran jenis="PUM" id={um.id} bolehUnggah={(pembuat && !['BATAL', 'SELESAI'].includes(um.status)) || (punya('AKUNTANSI', 'KASIR') && ['DISETUJUI', 'DIPROSES', 'DIBAYAR'].includes(um.status))} bolehHapus={bisaUbah} />
+          <PanelLampiran jenis="PUM" id={um.id} bolehUnggah={(pembuat && !['BATAL', 'SELESAI'].includes(um.status)) || (punya('STAF_KEUANGAN', 'KASIR') && ['DISETUJUI', 'DIPROSES', 'DIBAYAR'].includes(um.status))} bolehHapus={bisaUbah} />
         </div>
       </div>
     </>
@@ -317,7 +317,7 @@ function RingkasanSelisih({ uangMuka, realisasi }) {
         <div className="nilai">{rupiah(realisasi)}</div>
       </div>
       <div>
-        <div className="label">{selisih > 0 ? 'Sisa yang dikembalikan ke kas' : selisih < 0 ? 'Kekurangan yang dibayar perusahaan' : 'Selisih'}</div>
+        <div className="label">{selisih > 0 ? 'Sisa yang dikembalikan ke kas' : selisih < 0 ? 'Kekurangan yang dibayar fakultas' : 'Selisih'}</div>
         <div className={`nilai ${selisih > 0 ? 'sukses' : selisih < 0 ? 'bahaya' : ''}`}>{rupiah(Math.abs(selisih))}</div>
       </div>
     </div>
@@ -479,8 +479,8 @@ function IsiDetailPJUM({ pj }) {
         </Pesan>
       )}
       {pj.status === 'DISETUJUI' && pj.hasil === 'KURANG' && (
-        <Pesan jenis="info" judul="Kekurangan akan dibayar perusahaan">
-          Staf Akuntansi membuat BKK kekurangan sebesar {rupiah(-selisih)} untuk dibayarkan kepada pemohon.
+        <Pesan jenis="info" judul="Kekurangan akan dibayar fakultas">
+          Staf Keuangan membuat BKK kekurangan sebesar {rupiah(-selisih)} untuk dibayarkan kepada pemohon.
         </Pesan>
       )}
       <div className="grid-2-1">
@@ -492,7 +492,7 @@ function IsiDetailPJUM({ pj }) {
                 butir={[
                   ['Uang muka', <TautanDok jenis="PUM" id={pj.uang_muka_id}>{pj.uang_muka_nomor}</TautanDok>],
                   ['Pemohon', pj.dibuat_nama],
-                  ['Departemen', pj.departemen_nama],
+                  ['Unit kerja', pj.departemen_nama],
                   ['Tanggal', tanggal(pj.tanggal, true)],
                   ['Tenggat', tanggal(pj.tanggal_batas_pj, true)],
                   pj.hasil && ['Hasil penyelesaian', HASIL[pj.hasil]],
@@ -535,7 +535,7 @@ function IsiDetailPJUM({ pj }) {
         </div>
         <div>
           <PanelPersetujuan jenis="PJUM" id={pj.id} riwayat={pj.persetujuan} boleh={pj.boleh_memutuskan} />
-          <PanelLampiran jenis="PJUM" id={pj.id} bolehUnggah={(pembuat && ['DRAFT', 'DITOLAK', 'DIAJUKAN'].includes(pj.status)) || (punya('AKUNTANSI', 'SPV_AKUNTANSI', 'KASIR') && ['DISETUJUI', 'SELESAI'].includes(pj.status))} bolehHapus={bisaUbah} judul="Bukti belanja" />
+          <PanelLampiran jenis="PJUM" id={pj.id} bolehUnggah={(pembuat && ['DRAFT', 'DITOLAK', 'DIAJUKAN'].includes(pj.status)) || (punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'KASIR') && ['DISETUJUI', 'SELESAI'].includes(pj.status))} bolehHapus={bisaUbah} judul="Bukti belanja" />
           {pj.status !== 'BATAL' && (
             <p className="kecil lemah" style={{ marginTop: 12 }}>
               <Link to={`/uang-muka/${pj.uang_muka_id}`}>Lihat permintaan uang muka asal</Link>

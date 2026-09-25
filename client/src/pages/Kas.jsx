@@ -196,7 +196,7 @@ function FormBayar({ bkk }) {
   return (
     <form onSubmit={kirim} noValidate>
       {dilarang && <Pesan jenis="galat">{dilarang}</Pesan>}
-      {belumVerifikasi && <Pesan jenis="galat">Rekening pemasok belum diverifikasi. Transfer tidak dapat dicatat sampai Kepala Bagian Akuntansi memverifikasinya.</Pesan>}
+      {belumVerifikasi && <Pesan jenis="galat">Rekening pemasok belum diverifikasi. Transfer tidak dapat dicatat sampai Kepala Subbagian Keuangan memverifikasinya.</Pesan>}
       <div className="grid-2-1">
         <Kartu judul={`${METODE[bkk.metode_bayar]} dari ${bkk.rekening_nama}`}>
           <div className="formulir">
@@ -360,7 +360,7 @@ export function DetailPembayaran() {
               sub={`${METODE[p.metode]} ${p.nomor_warkat || p.nomor_referensi} · ${p.penerima_nama}`}
               aksi={
                 <>
-                  {punya('MANAJER_KEUANGAN') && p.status === 'DIBAYAR' && !p.tanggal_kliring && (
+                  {punya('WAKIL_DEKAN_2') && p.status === 'DIBAYAR' && !p.tanggal_kliring && (
                     <Tombol varian="bahaya" onClick={() => setBatal(true)}>
                       Batalkan pembayaran
                     </Tombol>
@@ -399,7 +399,7 @@ export function DetailPembayaran() {
                 </div>
               </Kartu>
               <div>
-                {punya('SPV_AKUNTANSI') && p.status === 'DIBAYAR' && (
+                {punya('KASUBAG_KEUANGAN') && p.status === 'DIBAYAR' && (
                   <Kartu judul="Kliring bank">
                     <p className="kecil lemah" style={{ marginTop: 0 }}>
                       Tandai tanggal pembayaran ini muncul di rekening koran. Biasanya dilakukan dari halaman rekonsiliasi bank.
@@ -445,7 +445,7 @@ export function DaftarBKM() {
     <>
       <Kepala
         judul="Bukti kas masuk"
-        sub="Uang yang kembali ke rekening perusahaan dalam siklus pengeluaran: sisa uang muka, pengembalian dana kas kecil, dan pengembalian dari pemasok."
+        sub="Uang yang kembali ke rekening fakultas dalam siklus pengeluaran: sisa uang muka, pengembalian dana kas kecil, dan pengembalian dari pemasok."
         aksi={punya('KASIR') && <TautanTombol ke="/bkm/baru" varian="utama" ikon="tambah">Catat kas masuk</TautanTombol>}
       />
       <Kartu rapat>
@@ -617,7 +617,7 @@ export function DetailBKM() {
               sub={`${SUMBER_BKM[k.sumber]} · ${k.diterima_dari}`}
               aksi={
                 <>
-                  {punya('MANAJER_KEUANGAN') && k.status === 'DICATAT' && (
+                  {punya('WAKIL_DEKAN_2') && k.status === 'DICATAT' && (
                     <Tombol varian="bahaya" onClick={batal} disabled={sibuk}>
                       Batalkan
                     </Tombol>

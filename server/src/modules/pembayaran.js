@@ -16,7 +16,7 @@ import { perbaruiStatusBukuCek, posisiDana } from './master.js';
 
 export const router = Router();
 
-const PERAN_LIHAT = ['KASIR', 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR'];
+const PERAN_LIHAT = ['KASIR', 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR'];
 
 daftarkanDokumen('BYR', { tabel: 'pembayaran', label: 'Pembayaran', bolehLihat: async (_db, user) => user.peran.some((p) => PERAN_LIHAT.includes(p)) });
 daftarkanDokumen('BKM', { tabel: 'penerimaan_kas', label: 'Bukti kas masuk', bolehLihat: async (_db, user) => user.peran.some((p) => PERAN_LIHAT.includes(p)) });
@@ -246,10 +246,10 @@ router.get('/pembayaran/:id', perlu(...PERAN_LIHAT), async (req, res) => {
 router.post('/pembayaran', perlu('KASIR'), async (req, res) => {
   res.status(201).json(await tx((conn) => bayarBKK(conn, req.ctx, req.body)));
 });
-router.post('/pembayaran/:id/batal', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/pembayaran/:id/batal', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   res.json(await tx((conn) => batalPembayaran(conn, req.ctx, Number(req.params.id), req.body)));
 });
-router.post('/pembayaran/:id/kliring', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/pembayaran/:id/kliring', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   const tgl = req.body?.tanggal_kliring || null;
   if (tgl && !/^\d{4}-\d{2}-\d{2}$/.test(tgl)) throw galatMasukan('Format tanggal harus TTTT-BB-HH.');
   await tx((conn) => tandaiKliring(conn, req.ctx, Number(req.params.id), tgl));
@@ -403,7 +403,7 @@ router.get('/bkm/:id', perlu(...PERAN_LIHAT), async (req, res) => {
 router.post('/bkm', perlu('KASIR'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatBKM(conn, req.ctx, req.body)));
 });
-router.post('/bkm/:id/batal', perlu('MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/bkm/:id/batal', perlu('WAKIL_DEKAN_2'), async (req, res) => {
   await tx((conn) => batalBKM(conn, req.ctx, Number(req.params.id), req.body?.alasan));
   res.json({ ok: true });
 });

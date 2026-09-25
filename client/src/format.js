@@ -124,3 +124,9 @@ export function hitungPajak(dasar, tarifPersen) {
   const milli = BigInt(Math.round(Number(tarifPersen || 0) * 1000));
   return Number((sen * milli) / 100000n / 100n);
 }
+
+/** Tarif pajak efektif; naik sekian persen bila penerima tanpa NPWP (PPh 23: 100%, PPh 21: 20%). */
+export function tarifEfektif(pajak, tanpaNpwp) {
+  const naik = tanpaNpwp ? Number(pajak?.persen_naik_tanpa_npwp || 0) : 0;
+  return Math.round(Number(pajak?.tarif || 0) * (100 + naik) * 10) / 1000;
+}

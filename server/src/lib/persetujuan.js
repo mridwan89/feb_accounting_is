@@ -2,6 +2,7 @@ import { jalankan, satu, semua } from '../db.js';
 import { galatAkses, galatKonflik, galatMasukan } from './galat.js';
 import { keSen } from './uang.js';
 import { namaPeran } from './akses.js';
+import { ambilPengaturan } from './pengaturan.js';
 
 async function jumlahPenyetuju(conn, peran, departemenId, pembuatId) {
   const params = [peran, pembuatId];
@@ -40,12 +41,14 @@ export async function mulaiPersetujuan(conn, ctx, { jenis, dokumenId, nomor, nil
     let lingkup = a.lingkup;
     let dept = lingkup === 'DEPARTEMEN' ? departemenId : null;
     let nama = a.nama_langkah;
-    // Pembuat adalah pemegang peran langkah ini di departemen yang sama: alihkan ke peran pengganti.
+    // Pembuat adalah pemegang peran langkah ini di unit yang sama: alihkan ke peran pengganti.
     if (lingkup === 'DEPARTEMEN' && pembuat.peran.includes(peran) && pembuat.departemen_id === departemenId) {
       if (!a.peran_pengganti_kode) {
         throw galatMasukan(`Aturan persetujuan ${jenis} langkah ${a.urutan} tidak memiliki peran pengganti. Hubungi Administrator.`);
       }
       peran = a.peran_pengganti_kode;
+      // Pembuat juga memegang peran pengganti (misalnya Wakil Dekan II yang memimpin Subbagian Keuangan): naik ke pimpinan tertinggi.
+      if (pembuat.peran.includes(peran)) peran = (await ambilPengaturan(conn)).peran_pimpinan_tertinggi || 'DEKAN';
       lingkup = 'GLOBAL';
       dept = null;
       nama = `${a.nama_langkah} (dialihkan ke ${await namaPeran(conn, peran)})`;
@@ -62,7 +65,7 @@ export async function mulaiPersetujuan(conn, ctx, { jenis, dokumenId, nomor, nil
     if (n === 0) {
       const dept = l.dept ? await satu(conn, 'SELECT nama FROM departemen WHERE id = ?', [l.dept]) : null;
       throw galatMasukan(
-        `Belum ada pengguna aktif berperan ${await namaPeran(conn, l.peran)}${dept ? ` di departemen ${dept.nama}` : ''} yang dapat menyetujui dokumen ini. Hubungi Administrator.`,
+        `Belum ada pengguna aktif berperan ${await namaPeran(conn, l.peran)}${dept ? ` di ${dept.nama}` : ''} yang dapat menyetujui dokumen ini. Hubungi Administrator.`,
       );
     }
   }
@@ -98,7 +101,7 @@ function periksaBolehMemutuskan(user, kini, semuaLangkah) {
   if (user.id === kini.pembuat_id) throw galatAkses('Anda pembuat dokumen ini sehingga tidak dapat menyetujui atau menolaknya.');
   if (!user.peran.includes(kini.peran_kode)) throw galatAkses('Langkah persetujuan saat ini bukan wewenang peran Anda.');
   if (kini.lingkup === 'DEPARTEMEN' && user.departemen_id !== kini.departemen_id) {
-    throw galatAkses('Dokumen ini milik departemen lain.');
+    throw galatAkses('Dokumen ini milik unit kerja lain.');
   }
   if (semuaLangkah.some((l) => l.status === 'DISETUJUI' && l.diputuskan_oleh === user.id)) {
     throw galatAkses('Anda sudah menyetujui langkah lain pada dokumen ini. Satu orang hanya menyetujui satu langkah.');

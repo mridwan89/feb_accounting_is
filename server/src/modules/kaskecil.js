@@ -50,7 +50,7 @@ daftarkanDokumen('OPN', {
   tabel: 'opname_kas_kecil',
   label: 'Opname kas kecil',
   bolehLihat: async (db, user, doc) =>
-    punya(user, 'AUDITOR', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR') || (await danaDipegang(db, user.id)).includes(doc.dana_id),
+    punya(user, 'AUDITOR', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN') || (await danaDipegang(db, user.id)).includes(doc.dana_id),
 });
 
 async function ambilDanaAktif(conn, danaId, kunci = false) {
@@ -321,7 +321,7 @@ router.post('/pdk/:id/ajukan', perlu('KAS_KECIL'), async (req, res) => {
   await tx((conn) => ajukanPDK(conn, req.ctx, Number(req.params.id)));
   res.json({ ok: true });
 });
-router.post('/pdk/:id/tolak', perlu('AKUNTANSI'), async (req, res) => {
+router.post('/pdk/:id/tolak', perlu('STAF_KEUANGAN'), async (req, res) => {
   await tx((conn) => tolakPDK(conn, req.ctx, Number(req.params.id), req.body?.catatan));
   res.json({ ok: true });
 });
@@ -417,29 +417,29 @@ const OPN_SELECT = `SELECT o.*, dn.nama AS dana_nama, dn.kode AS dana_kode, dn.p
 router.get('/opname', async (req, res) => {
   const syarat = [];
   const params = [];
-  if (!punya(req.user, 'AUDITOR', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR')) { syarat.push('dn.pemegang_id = ?'); params.push(req.user.id); }
+  if (!punya(req.user, 'AUDITOR', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN')) { syarat.push('dn.pemegang_id = ?'); params.push(req.user.id); }
   if (req.query.dana_id) { syarat.push('o.dana_id = ?'); params.push(Number(req.query.dana_id)); }
   res.json(await semua(pool, `${OPN_SELECT} ${syarat.length ? `WHERE ${syarat.join(' AND ')}` : ''} ORDER BY o.waktu_opname DESC LIMIT 500`, params));
 });
 
-router.get('/opname/pratinjau', perlu('AUDITOR', 'SPV_AKUNTANSI'), async (req, res) => {
+router.get('/opname/pratinjau', perlu('AUDITOR', 'KASUBAG_KEUANGAN'), async (req, res) => {
   res.json(await hitungOpname(pool, Number(req.query.dana_id), {}));
 });
 
 router.get('/opname/:id', async (req, res) => {
   const o = await satu(pool, `${OPN_SELECT} WHERE o.id = ?`, [req.params.id]);
   if (!o) throw galatTidakAda('Opname tidak ditemukan.');
-  if (!punya(req.user, 'AUDITOR', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR') && o.pemegang_id !== req.user.id) throw galatAkses('Anda tidak berwenang melihat dokumen ini.');
+  if (!punya(req.user, 'AUDITOR', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN') && o.pemegang_id !== req.user.id) throw galatAkses('Anda tidak berwenang melihat dokumen ini.');
   res.json({ ...o, rincian: typeof o.rincian === 'string' ? JSON.parse(o.rincian) : o.rincian });
 });
 
-router.post('/opname', perlu('AUDITOR', 'SPV_AKUNTANSI'), async (req, res) => {
+router.post('/opname', perlu('AUDITOR', 'KASUBAG_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatOpname(conn, req.ctx, req.body)));
 });
-router.put('/opname/:id', perlu('AUDITOR', 'SPV_AKUNTANSI'), async (req, res) => {
+router.put('/opname/:id', perlu('AUDITOR', 'KASUBAG_KEUANGAN'), async (req, res) => {
   res.json(await tx((conn) => ubahOpname(conn, req.ctx, Number(req.params.id), req.body)));
 });
-router.post('/opname/:id/final', perlu('AUDITOR', 'SPV_AKUNTANSI'), async (req, res) => {
+router.post('/opname/:id/final', perlu('AUDITOR', 'KASUBAG_KEUANGAN'), async (req, res) => {
   res.json(await tx((conn) => ubahOpname(conn, req.ctx, Number(req.params.id), null, true)));
 });
 

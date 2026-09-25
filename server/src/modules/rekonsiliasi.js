@@ -13,7 +13,7 @@ import { akunSistem } from '../lib/pengaturan.js';
 
 export const router = Router();
 
-const PERAN_LIHAT = ['SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR', 'AKUNTANSI'];
+const PERAN_LIHAT = ['KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR', 'STAF_KEUANGAN'];
 
 daftarkanDokumen('RB', { tabel: 'rekonsiliasi_bank', label: 'Rekonsiliasi bank', bolehLihat: async (_db, user) => punya(user, PERAN_LIHAT) });
 
@@ -239,21 +239,21 @@ export async function detailRekonsiliasi(db, rbId) {
 router.get('/rekonsiliasi/:id', perlu(...PERAN_LIHAT), async (req, res) => {
   res.json(await detailRekonsiliasi(pool, Number(req.params.id)));
 });
-router.post('/rekonsiliasi', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/rekonsiliasi', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatRekonsiliasi(conn, req.ctx, req.body)));
 });
-router.put('/rekonsiliasi/:id', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.put('/rekonsiliasi/:id', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => ubahSaldoKoran(conn, req.ctx, Number(req.params.id), req.body?.saldo_rekening_koran));
   res.json({ ok: true });
 });
-router.post('/rekonsiliasi/:id/item', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/rekonsiliasi/:id/item', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => tambahPos(conn, req.ctx, Number(req.params.id), req.body)));
 });
-router.delete('/rekonsiliasi/:id/item/:itemId', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.delete('/rekonsiliasi/:id/item/:itemId', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => hapusPos(conn, req.ctx, Number(req.params.id), Number(req.params.itemId)));
   res.json({ ok: true });
 });
-router.post('/rekonsiliasi/:id/final', perlu('SPV_AKUNTANSI'), async (req, res) => {
+router.post('/rekonsiliasi/:id/final', perlu('KASUBAG_KEUANGAN'), async (req, res) => {
   await tx((conn) => finalkanRekonsiliasi(conn, req.ctx, Number(req.params.id)));
   res.json({ ok: true });
 });

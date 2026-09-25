@@ -45,7 +45,7 @@ router.get('/dasbor', async (req, res) => {
   if (punya(u, 'GUDANG')) {
     tugas('PO yang menunggu penerimaan barang atau jasa', await hitung("SELECT COUNT(*) AS n FROM pesanan_pembelian WHERE status IN ('DISETUJUI','DITERIMA_SEBAGIAN')"), '/penerimaan/baru');
   }
-  if (punya(u, 'AKUNTANSI')) {
+  if (punya(u, 'STAF_KEUANGAN')) {
     tugas('Faktur draf atau ditolak yang belum diverifikasi', await hitung("SELECT COUNT(*) AS n FROM faktur_pemasok WHERE status IN ('DRAFT','DITOLAK')"), '/faktur');
     tugas('Permintaan pembayaran siap dibuatkan BKK', await hitung("SELECT COUNT(*) AS n FROM permintaan_pembayaran WHERE status = 'DISETUJUI'"), '/bkk/baru?jenis=PERMINTAAN_PEMBAYARAN');
     tugas('Uang muka siap dibuatkan BKK', await hitung("SELECT COUNT(*) AS n FROM uang_muka WHERE status = 'DISETUJUI'"), '/bkk/baru?jenis=UANG_MUKA');
@@ -67,7 +67,7 @@ router.get('/dasbor', async (req, res) => {
     }
     hasil.kartu.push({ label: 'Antrean pembayaran', nilai: antrean.nilai, keterangan: `${antrean.n} BKK` });
   }
-  if (punya(u, 'SPV_AKUNTANSI')) {
+  if (punya(u, 'KASUBAG_KEUANGAN')) {
     tugas('Rekening pemasok menunggu verifikasi', await hitung('SELECT COUNT(*) AS n FROM pemasok WHERE bank_nomor_rekening IS NOT NULL AND rekening_terverifikasi = 0 AND (rekening_diubah_oleh IS NULL OR rekening_diubah_oleh <> ?)', [u.id]), '/pemasok?belum_verifikasi=1');
     const bulanLalu = bulan === 1 ? { tahun: tahun - 1, bulan: 12 } : { tahun, bulan: bulan - 1 };
     tugas(`Rekonsiliasi bank ${bulanLalu.bulan}/${bulanLalu.tahun} yang belum final`, await hitung(
@@ -86,7 +86,7 @@ router.get('/dasbor', async (req, res) => {
       tugas(`Pengeluaran ${d.nama} yang disetujui dan menunggu dibayar`, await hitung("SELECT COUNT(*) AS n FROM pengeluaran_kas_kecil WHERE dana_id = ? AND status = 'DISETUJUI'", [d.id]), '/pkk?status=DISETUJUI');
     }
   }
-  if (punya(u, 'AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR')) {
+  if (punya(u, 'STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR')) {
     const batas7 = tambahHari(kini, 7);
     const utang = await satu(pool, "SELECT COALESCE(SUM(total_utang - terbayar), 0) AS nilai, COUNT(*) AS n FROM faktur_pemasok WHERE status IN ('TERVERIFIKASI','DIBAYAR_SEBAGIAN')");
     const jt = await satu(pool, "SELECT COALESCE(SUM(total_utang - terbayar), 0) AS nilai, COUNT(*) AS n FROM faktur_pemasok WHERE status IN ('TERVERIFIKASI','DIBAYAR_SEBAGIAN') AND tanggal_jatuh_tempo BETWEEN ? AND ?", [kini, batas7]);

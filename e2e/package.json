@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "pretest": "npm --prefix ../client run build",
-    "test": "playwright test",
+    "test": "playwright test --project=chromium --project=desktop",
     "test:desktop": "playwright test --project=desktop --no-deps",
-    "tangkapan": "playwright test --grep @tangkapan"
+    "pretangkapan": "npm --prefix ../client run build",
+    "tangkapan": "playwright test --project=tangkapan"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1"

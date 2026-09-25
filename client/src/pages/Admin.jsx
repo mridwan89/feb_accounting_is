@@ -54,14 +54,17 @@ function FormPengguna({ awal, onTutup }) {
         <Kolom label="Nama lengkap" galat={f.galat.nama_lengkap} lebar={4}>
           <Masukan {...f.ikat('nama_lengkap')} salah={!!f.galat.nama_lengkap} />
         </Kolom>
-        <Kolom label="Jabatan" opsional lebar={4}>
+        <Kolom label="Jabatan" opsional bantuan="Dicetak di bawah tanda tangan, misalnya Wakil Dekan Bidang Riset dan Kerja Sama." lebar={4}>
           <Masukan {...f.ikat('jabatan')} />
+        </Kolom>
+        <Kolom label="Nomor pegawai (NIPY)" opsional galat={f.galat.nomor_pegawai} lebar={4}>
+          <Masukan {...f.ikat('nomor_pegawai')} salah={!!f.galat.nomor_pegawai} />
         </Kolom>
         <Kolom label="Email" opsional galat={f.galat.email} lebar={4}>
           <Masukan type="email" {...f.ikat('email')} salah={!!f.galat.email} />
         </Kolom>
-        <Kolom label="Departemen" galat={f.galat.departemen_id} lebar={4}>
-          <Pilihan pilihan={(dept.data || []).map((d) => [d.id, d.nama])} kosong="Pilih departemen" {...f.ikat('departemen_id')} salah={!!f.galat.departemen_id} />
+        <Kolom label="Unit kerja" galat={f.galat.departemen_id} lebar={4}>
+          <Pilihan pilihan={(dept.data || []).map((d) => [d.id, d.nama])} kosong="Pilih unit kerja" {...f.ikat('departemen_id')} salah={!!f.galat.departemen_id} />
         </Kolom>
         {baru ? (
           <Kolom label="Kata sandi awal" galat={f.galat.password_awal} bantuan="Serahkan secara langsung; pengguna wajib menggantinya." lebar={4}>
@@ -136,12 +139,12 @@ export function HalamanPengguna() {
       <Kepala
         judul="Pengguna"
         sub="Setiap akun milik satu orang. Kombinasi peran yang bertentangan ditolak sistem."
-        aksi={admin && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ username: '', nama_lengkap: '', jabatan: '', email: '', departemen_id: '', peran: [], aktif: true, password_awal: '' })}>Tambah pengguna</Tombol>}
+        aksi={admin && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ username: '', nama_lengkap: '', jabatan: '', nomor_pegawai: '', email: '', departemen_id: '', peran: [], aktif: true, password_awal: '' })}>Tambah pengguna</Tombol>}
       />
       <Kartu rapat>
         <div className="saring">
           <Kolom label="Cari" className="lebar">
-            <Masukan type="search" value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Nama, nama pengguna, atau departemen" />
+            <Masukan type="search" value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Nama, nama pengguna, atau unit kerja" />
           </Kolom>
         </div>
         <Muat kueri={q}>
@@ -152,7 +155,7 @@ export function HalamanPengguna() {
                   <tr>
                     <th>Nama</th>
                     <th>Nama pengguna</th>
-                    <th>Departemen</th>
+                    <th>Unit kerja</th>
                     <th>Peran</th>
                     <th>Terakhir masuk</th>
                     <th>Status</th>
@@ -195,7 +198,7 @@ export function HalamanPengguna() {
                                   Atur ulang sandi
                                 </Tombol>
                               )}
-                              <Tombol kecil varian="hantu" onClick={() => setForm({ ...u, jabatan: u.jabatan || '', email: u.email || '' })}>
+                              <Tombol kecil varian="hantu" onClick={() => setForm({ ...u, jabatan: u.jabatan || '', nomor_pegawai: u.nomor_pegawai || '', email: u.email || '' })}>
                                 Ubah
                               </Tombol>
                             </>
@@ -231,7 +234,7 @@ export function HalamanAturan() {
     { kunci: 'batas_bawah', label: 'Berlaku bila nilai di atas (Rp)', jenis: 'uang', lebar: 3 },
     { kunci: 'nama_langkah', label: 'Nama langkah', lebar: 6 },
     { kunci: 'peran_kode', label: 'Peran penyetuju', jenis: 'pilihan', pilihan: pilihanPeran, lebar: 6 },
-    { kunci: 'lingkup', label: 'Lingkup', jenis: 'pilihan', pilihan: [['DEPARTEMEN', 'Departemen pembuat'], ['GLOBAL', 'Seluruh perusahaan']], lebar: 6 },
+    { kunci: 'lingkup', label: 'Lingkup', jenis: 'pilihan', pilihan: [['DEPARTEMEN', 'Unit kerja pembuat'], ['GLOBAL', 'Seluruh fakultas']], lebar: 6 },
     { kunci: 'peran_pengganti_kode', label: 'Peran pengganti', jenis: 'pilihan', kosong: 'Tidak ada', pilihan: pilihanPeran, lebar: 6, bantuan: 'Dipakai bila pembuat dokumen sendiri memegang peran penyetuju di departemennya.' },
     { kunci: 'aktif', label: '', jenis: 'centang', labelCentang: 'Langkah aktif', lebar: 12 },
   ];
@@ -280,7 +283,7 @@ export function HalamanAturan() {
                           <td>{a.urutan}</td>
                           <td>{a.nama_langkah}</td>
                           <td>{a.peran_nama}</td>
-                          <td>{a.lingkup === 'DEPARTEMEN' ? 'Departemen pembuat' : 'Seluruh perusahaan'}</td>
+                          <td>{a.lingkup === 'DEPARTEMEN' ? 'Unit kerja pembuat' : 'Seluruh fakultas'}</td>
                           <td>{Number(a.batas_bawah) > 0 ? `Di atas ${rupiah(a.batas_bawah)}` : 'Semua nilai'}</td>
                           <td>{a.peran_pengganti_nama || '-'}</td>
                           <td>{a.aktif ? 'Aktif' : 'Nonaktif'}</td>
@@ -354,7 +357,7 @@ export function HalamanKonflik() {
 // ---------------------------------------------------------------- pengaturan
 
 const KELOMPOK_PENGATURAN = [
-  ['Identitas perusahaan (kop formulir)', (k) => k.startsWith('perusahaan_')],
+  ['Identitas institusi (kop formulir)', (k) => k.startsWith('institusi_')],
   ['Pengendalian transaksi', (k) => ['toleransi_harga_persen', 'toleransi_qty_persen', 'hari_batas_pj_uang_muka', 'wajib_lampiran', 'batas_lampiran_mb', 'ambang_kas_kecil_persen'].includes(k)],
   ['Keamanan akun dan sesi', (k) => k.startsWith('sesi_') || ['maks_gagal_login', 'durasi_kunci_menit', 'min_panjang_password'].includes(k)],
   ['Akun dan pajak sistem', (k) => k.startsWith('akun_') || k.startsWith('pajak_')],

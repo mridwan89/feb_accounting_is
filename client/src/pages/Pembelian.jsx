@@ -51,7 +51,7 @@ export function DaftarPO() {
                     <th>Nomor</th>
                     <th>Tanggal</th>
                     <th>Pemasok</th>
-                    <th>Departemen</th>
+                    <th>Unit kerja</th>
                     <th>Keterangan</th>
                     <th className="angka">Total</th>
                     <th>Status</th>
@@ -134,8 +134,8 @@ function FormPO({ awal, id }) {
           <Kolom label="Pemasok" galat={f.galat.pemasok_id} lebar={5}>
             <Kombo pilihan={pemasok} value={v.pemasok_id} onChange={pilihPemasok} salah={!!f.galat.pemasok_id} placeholder="Ketik nama pemasok" />
           </Kolom>
-          <Kolom label="Departemen peminta" galat={f.galat.departemen_id} lebar={4}>
-            <Pilihan pilihan={(dept.data || []).filter((d) => d.aktif).map((d) => [d.id, d.nama])} kosong="Pilih departemen" {...f.ikat('departemen_id')} salah={!!f.galat.departemen_id} />
+          <Kolom label="Unit peminta" galat={f.galat.departemen_id} lebar={4}>
+            <Pilihan pilihan={(dept.data || []).filter((d) => d.aktif).map((d) => [d.id, d.nama])} kosong="Pilih unit kerja" {...f.ikat('departemen_id')} salah={!!f.galat.departemen_id} />
           </Kolom>
           <Kolom label="Tanggal kirim" opsional galat={f.galat.tanggal_kirim} lebar={3}>
             <Masukan type="date" {...f.ikat('tanggal_kirim')} salah={!!f.galat.tanggal_kirim} />
@@ -268,7 +268,7 @@ function IsiDetailPO({ po }) {
             {punya('GUDANG') && ['DISETUJUI', 'DITERIMA_SEBAGIAN'].includes(po.status) && (
               <TautanTombol ke={`/penerimaan/baru?po_id=${po.id}`} varian="utama" ikon="kotak">Catat penerimaan</TautanTombol>
             )}
-            {punya('AKUNTANSI') && bisaDitagih && (
+            {punya('STAF_KEUANGAN') && bisaDitagih && (
               <TautanTombol ke={`/faktur/baru?po_id=${po.id}`} varian="utama" ikon="faktur">Catat faktur</TautanTombol>
             )}
             {bisaUbah && (
@@ -289,7 +289,7 @@ function IsiDetailPO({ po }) {
                 ['Pemasok', po.pemasok.nama],
                 ['Alamat pemasok', [po.pemasok.alamat, po.pemasok.kota].filter(Boolean).join(', ')],
                 ['NPWP', po.pemasok.npwp || 'Tidak ada'],
-                ['Departemen peminta', po.departemen_nama],
+                ['Unit peminta', po.departemen_nama],
                 ['Tanggal kirim', tanggal(po.tanggal_kirim, true)],
                 ['Termin pembayaran', `${po.termin_hari} hari`],
                 ['Dibuat oleh', po.dibuat_nama],
@@ -357,7 +357,7 @@ function IsiDetailPO({ po }) {
                   {po.faktur.map((x) => (
                     <tr key={`f${x.id}`} className={x.status === 'BATAL' ? 'redup' : ''}>
                       <td>Faktur {x.nomor_faktur}</td>
-                      <td>{punya('AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR', 'KASIR') ? <TautanDok jenis="FB" id={x.id}>{x.nomor}</TautanDok> : x.nomor}</td>
+                      <td>{punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR', 'KASIR') ? <TautanDok jenis="FB" id={x.id}>{x.nomor}</TautanDok> : x.nomor}</td>
                       <td>{tanggal(x.tanggal_faktur)}</td>
                       <td className="angka">{rupiah(x.total_tagihan)}</td>
                       <td>

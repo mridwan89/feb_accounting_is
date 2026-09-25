@@ -7,44 +7,44 @@ after(tutup);
 let beli;
 let gudang;
 let akt;
-let kabeli;
-let dirkeu;
-let mankeu;
+let katu;
+let dekan;
+let wd2;
 before(async () => {
   await siapkan();
-  [beli, gudang, akt, kabeli, dirkeu, mankeu] = await Promise.all(['beli1', 'gudang1', 'akt1', 'kabeli', 'dirkeu', 'mankeu'].map((u) => sebagai(u)));
+  [beli, gudang, akt, katu, dekan, wd2] = await Promise.all(['pengadaan1', 'rt1', 'stafkeu1', 'katu', 'dekan', 'wd2'].map((u) => sebagai(u)));
 });
 
 async function poDisetujui({ pemasok = 'BKN', qty = 100, harga = 50000, jenis = 'BARANG', ppn = true, akun = '1-1301' } = {}) {
   const r = await beli.post('/api/po', {
-    pemasok_id: await idPemasok(pemasok), departemen_id: await idDept('PRD'), ppn,
+    pemasok_id: await idPemasok(pemasok), departemen_id: await idDept('TU'), ppn,
     baris: [{ uraian: `Barang uji ${qty}x${harga}`, jenis, qty, satuan: 'unit', harga, akun_id: await idAkun(akun) }],
   });
   assert.equal(r.status, 201, JSON.stringify(r.body));
   assert.equal((await beli.post(`/api/po/${r.body.id}/ajukan`)).status, 200);
-  await setujui('PO', r.body.id, kabeli);
+  await setujui('PO', r.body.id, katu);
   const po = await beli.get(`/api/po/${r.body.id}`);
   return po.body;
 }
 
-test('US-19: PO di atas Rp100 juta disetujui Kepala Departemen Pembelian lalu Direktur', async () => {
+test('US-19: PO di atas Rp50 juta disetujui pimpinan unit lalu Dekan', async () => {
   const r = await beli.post('/api/po', {
-    pemasok_id: await idPemasok('BKN'), departemen_id: await idDept('PRD'), ppn: false,
-    baris: [{ uraian: 'Kertas kraft', jenis: 'BARANG', qty: 3000, satuan: 'rol', harga: 50000, akun_id: await idAkun('1-1301') }],
+    pemasok_id: await idPemasok('BKN'), departemen_id: await idDept('TU'), ppn: false,
+    baris: [{ uraian: 'Kertas HVS A4', jenis: 'BARANG', qty: 3000, satuan: 'rim', harga: 50000, akun_id: await idAkun('1-1301') }],
   });
   assert.equal(r.status, 201);
   await beli.post(`/api/po/${r.body.id}/ajukan`);
   const langkah = await semua(pool, "SELECT peran_kode FROM persetujuan WHERE jenis_dokumen = 'PO' AND dokumen_id = ? ORDER BY urutan", [r.body.id]);
-  assert.deepEqual(langkah.map((l) => l.peran_kode), ['KEPALA_DEPT', 'DIREKTUR']);
-  await setujui('PO', r.body.id, kabeli);
+  assert.deepEqual(langkah.map((l) => l.peran_kode), ['PIMPINAN_UNIT', 'DEKAN']);
+  await setujui('PO', r.body.id, katu);
   assert.equal((await beli.get(`/api/po/${r.body.id}`)).body.status, 'DIAJUKAN');
-  await setujui('PO', r.body.id, dirkeu);
+  await setujui('PO', r.body.id, dekan);
   assert.equal((await beli.get(`/api/po/${r.body.id}`)).body.status, 'DISETUJUI');
 });
 
 test('PPN ditolak pada PO untuk pemasok yang bukan PKP', async () => {
   const r = await beli.post('/api/po', {
-    pemasok_id: await idPemasok('SAT'), departemen_id: await idDept('UMS'), ppn: true,
+    pemasok_id: await idPemasok('SAT'), departemen_id: await idDept('AKT'), ppn: true,
     baris: [{ uraian: 'Map', jenis: 'BARANG', qty: 10, satuan: 'pak', harga: 20000, akun_id: await idAkun('6-1104') }],
   });
   assert.equal(r.status, 400);
@@ -77,8 +77,32 @@ test('US-01: faktur cocok tiga arah langsung terverifikasi dan jurnal pembelian 
   const detail = await akt.get(`/api/faktur/${f.body.id}`);
   assert.equal(detail.body.total_utang, 4440000);
   const jurnal = await semua(pool, 'SELECT a.kode, d.debit, d.kredit FROM jurnal_detail d JOIN akun a ON a.id = d.akun_id WHERE d.jurnal_id = ? ORDER BY d.baris', [detail.body.jurnal_id]);
-  assert.deepEqual(jurnal.map((j) => [j.kode, j.debit, j.kredit]), [['1-1301', 4000000, 0], ['1-1501', 440000, 0], ['2-1101', 0, 4440000]]);
+  // Fakultas bukan PKP: PPN yang dibayar menjadi bagian harga perolehan, bukan PPN masukan.
+  assert.deepEqual(jurnal.map((j) => [j.kode, j.debit, j.kredit]), [['1-1301', 4440000, 0], ['2-1101', 0, 4440000]]);
   assert.equal(detail.body.tanggal_jatuh_tempo, '2026-10-20');
+});
+
+test('PPN faktur dibagi sebanding nilai baris tanpa selisih pembulatan', async () => {
+  const r = await beli.post('/api/po', {
+    pemasok_id: await idPemasok('BKN'), departemen_id: await idDept('TU'), ppn: true,
+    baris: [
+      { uraian: 'Kertas HVS A4', jenis: 'BARANG', qty: 7, satuan: 'rim', harga: 53333, akun_id: await idAkun('6-1104') },
+      { uraian: 'Map plastik', jenis: 'BARANG', qty: 3, satuan: 'pak', harga: 21111, akun_id: await idAkun('6-1105') },
+    ],
+  });
+  assert.equal(r.status, 201, JSON.stringify(r.body));
+  await beli.post(`/api/po/${r.body.id}/ajukan`);
+  await setujui('PO', r.body.id, katu);
+  const po = (await beli.get(`/api/po/${r.body.id}`)).body;
+  await gudang.post('/api/penerimaan', { jenis: 'LPB', po_id: po.id, baris: po.baris.map((b) => ({ po_detail_id: b.id, qty: b.qty })) });
+  const f = await akt.post('/api/faktur', { po_id: po.id, nomor_faktur: 'UJI-PPN-2', tanggal_faktur: '2026-09-20', tanggal_terima: '2026-09-21', baris: po.baris.map((b) => ({ po_detail_id: b.id, qty: b.qty, harga: b.harga })) });
+  assert.equal(f.status, 201, JSON.stringify(f.body));
+  await akt.post(`/api/faktur/${f.body.id}/verifikasi`);
+  const detail = (await akt.get(`/api/faktur/${f.body.id}`)).body;
+  const jurnal = await semua(pool, 'SELECT a.kode, d.debit, d.kredit FROM jurnal_detail d JOIN akun a ON a.id = d.akun_id WHERE d.jurnal_id = ? ORDER BY d.baris', [detail.jurnal_id]);
+  // DPP 373.331 + 63.333 = 436.664; PPN 48.033 dibagi 41.067 dan 6.966 (sisa pembulatan ke baris terbesar).
+  assert.equal(detail.ppn, 48033);
+  assert.deepEqual(jurnal.map((j) => [j.kode, j.debit, j.kredit]), [['6-1104', 414398, 0], ['6-1105', 70299, 0], ['2-1101', 0, 484697]]);
 });
 
 test('US-01: kuantitas melebihi penerimaan menunggu persetujuan; bila ditolak, kuantitas dilepas', async () => {
@@ -92,9 +116,9 @@ test('US-01: kuantitas melebihi penerimaan menunggu persetujuan; bila ditolak, k
   const baris = await satu(pool, 'SELECT status_cocok, qty_tersedia FROM faktur_pemasok_detail WHERE faktur_id = ?', [f.body.id]);
   assert.equal(baris.status_cocok, 'SELISIH_QTY');
   assert.equal(baris.qty_tersedia, 80);
-  assert.ok((await mankeu.get('/api/persetujuan/tugas')).body.some((t) => t.jenis_dokumen === 'FB' && t.dokumen_id === f.body.id));
+  assert.ok((await wd2.get('/api/persetujuan/tugas')).body.some((t) => t.jenis_dokumen === 'FB' && t.dokumen_id === f.body.id));
 
-  await mankeu.post(`/api/persetujuan/FB/${f.body.id}/tolak`, { catatan: 'Tagih sesuai barang yang diterima' });
+  await wd2.post(`/api/persetujuan/FB/${f.body.id}/tolak`, { catatan: 'Tagih sesuai barang yang diterima' });
   assert.equal((await satu(pool, 'SELECT qty_ditagih FROM pesanan_pembelian_detail WHERE id = ?', [d.id])).qty_ditagih, 0);
   const ubah = await akt.put(`/api/faktur/${f.body.id}`, { po_id: po.id, nomor_faktur: 'UJI-QTY-1', tanggal_faktur: '2026-09-20', tanggal_terima: '2026-09-21', baris: [{ po_detail_id: d.id, qty: 80, harga: 50000 }] });
   assert.equal(ubah.status, 200);
@@ -110,8 +134,8 @@ test('US-01: harga di atas harga PO dengan toleransi 0% berstatus selisih harga'
   await akt.post(`/api/faktur/${f.body.id}/verifikasi`);
   const baris = await satu(pool, 'SELECT status_cocok FROM faktur_pemasok_detail WHERE faktur_id = ?', [f.body.id]);
   assert.equal(baris.status_cocok, 'SELISIH_HARGA');
-  // Setelah Manajer Keuangan menyetujui selisih, faktur diposting dan tercatat di laporan pengecualian.
-  await setujui('FB', f.body.id, mankeu);
+  // Setelah Wakil Dekan II menyetujui selisih, faktur diposting dan tercatat di laporan pengecualian.
+  await setujui('FB', f.body.id, wd2);
   assert.equal((await akt.get(`/api/faktur/${f.body.id}`)).body.status, 'TERVERIFIKASI');
   const auditor = await sebagai('auditor1');
   const lap = await auditor.get('/api/laporan/pengecualian?dari=2026-09-01&sampai=2026-09-30');
@@ -143,7 +167,7 @@ test('AB-21: PPh Pasal 23 naik 100% untuk pemasok tanpa NPWP', async () => {
 
 test('Faktur tanpa PO yang disetujui ditolak', async () => {
   const r = await beli.post('/api/po', {
-    pemasok_id: await idPemasok('BKN'), departemen_id: await idDept('PRD'),
+    pemasok_id: await idPemasok('BKN'), departemen_id: await idDept('TU'),
     baris: [{ uraian: 'Draf', jenis: 'BARANG', qty: 1, satuan: 'unit', harga: 1000, akun_id: await idAkun('1-1301') }],
   });
   const f = await akt.post('/api/faktur', { po_id: r.body.id, nomor_faktur: 'UJI-DRAF', tanggal_faktur: '2026-09-20', tanggal_terima: '2026-09-21', baris: [{ po_detail_id: (await beli.get(`/api/po/${r.body.id}`)).body.baris[0].id, qty: 1, harga: 1000 }] });

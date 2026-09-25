@@ -81,7 +81,7 @@ export function DaftarPemasok() {
     <>
       <Kepala
         judul="Pemasok"
-        sub="Data pemasok dipelihara Staf Pembelian. Perubahan rekening bank wajib diverifikasi Kepala Bagian Akuntansi sebelum dipakai untuk transfer."
+        sub="Data pemasok dipelihara Staf Pengadaan. Perubahan rekening bank wajib diverifikasi Kepala Subbagian Keuangan sebelum dipakai untuk transfer."
         aksi={punya('PEMBELIAN') && <TautanTombol ke="/pemasok/baru" varian="utama" ikon="tambah">Tambah pemasok</TautanTombol>}
       />
       <Kartu rapat>
@@ -152,7 +152,7 @@ function FormPemasok({ awal, id }) {
     e.preventDefault();
     const r = await jalankan(() => (id ? api.put(`/pemasok/${id}`, v) : api.post('/pemasok', v)), {
       setGalat: f.setGalat,
-      sukses: rekeningBerubah ? 'Data pemasok tersimpan. Rekening baru menunggu verifikasi Kepala Bagian Akuntansi.' : 'Data pemasok tersimpan.',
+      sukses: rekeningBerubah ? 'Data pemasok tersimpan. Rekening baru menunggu verifikasi Kepala Subbagian Keuangan.' : 'Data pemasok tersimpan.',
     });
     if (r.ok) navigate(`/pemasok/${id || r.hasil.id}`);
   };
@@ -241,7 +241,7 @@ export function DetailPemasok() {
   return (
     <Muat kueri={q}>
       {(p) => {
-        const bolehVerifikasi = punya('SPV_AKUNTANSI') && p.bank_nomor_rekening && !p.rekening_terverifikasi && p.rekening_diubah_oleh !== pengguna.id;
+        const bolehVerifikasi = punya('KASUBAG_KEUANGAN') && p.bank_nomor_rekening && !p.rekening_terverifikasi && p.rekening_diubah_oleh !== pengguna.id;
         const verifikasi = async () => {
           const r = await konfirmasi({
             judul: `Verifikasi rekening ${p.nama}`,
@@ -268,7 +268,7 @@ export function DetailPemasok() {
               sub={`${p.kode}${p.kota ? ` · ${p.kota}` : ''}`}
               aksi={
                 <>
-                  {punya(['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR']) && (
+                  {punya(['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR']) && (
                     <TautanTombol ke={`/laporan/buku-pembantu-utang?pemasok_id=${p.id}`}>Buku pembantu utang</TautanTombol>
                   )}
                   {punya('PEMBELIAN') && <TautanTombol ke={`/pemasok/${p.id}/ubah`} ikon="pena">Ubah</TautanTombol>}
@@ -283,7 +283,7 @@ export function DetailPemasok() {
             {p.bank_nomor_rekening && !p.rekening_terverifikasi && (
               <Pesan jenis="peringatan" judul="Rekening menunggu verifikasi">
                 Diubah oleh {p.rekening_diubah_nama || '-'} pada {waktu(p.rekening_diubah_pada)}. Transfer kepada pemasok ini belum dapat diproses.
-                {punya('SPV_AKUNTANSI') && p.rekening_diubah_oleh === pengguna.id && ' Verifikasi harus dilakukan pengguna lain karena Anda yang mengubahnya.'}
+                {punya('KASUBAG_KEUANGAN') && p.rekening_diubah_oleh === pengguna.id && ' Verifikasi harus dilakukan pengguna lain karena Anda yang mengubahnya.'}
               </Pesan>
             )}
             <div className="grid-2">
@@ -362,7 +362,7 @@ export function HalamanAkun() {
       <Kepala
         judul="Bagan akun"
         sub="Akun yang sudah dipakai jurnal tidak dapat diubah kode, kategori, saldo normal, atau tipenya; nonaktifkan lalu buat akun baru bila perlu."
-        aksi={punya('SPV_AKUNTANSI') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', kategori: 'BEBAN', saldo_normal: 'D', tipe: 'DETAIL', induk_id: '', aktif: true })}>Tambah akun</Tombol>}
+        aksi={punya('KASUBAG_KEUANGAN') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', kategori: 'BEBAN', saldo_normal: 'D', tipe: 'DETAIL', induk_id: '', aktif: true })}>Tambah akun</Tombol>}
       />
       <Kartu rapat>
         <div className="saring">
@@ -397,7 +397,7 @@ export function HalamanAkun() {
                       <td>{a.tipe === 'INDUK' ? 'Induk' : 'Detail'}</td>
                       <td>{a.aktif ? 'Aktif' : 'Nonaktif'}</td>
                       <td className="aksi-baris">
-                        {punya('SPV_AKUNTANSI') && (
+                        {punya('KASUBAG_KEUANGAN') && (
                           <Tombol kecil varian="hantu" onClick={() => setForm({ ...a, induk_id: a.induk_id || '', aktif: !!a.aktif })}>
                             Ubah
                           </Tombol>
@@ -439,15 +439,15 @@ export function HalamanPajak() {
     { kunci: 'jenis', label: 'Jenis', jenis: 'pilihan', pilihan: [['PPN', 'PPN'], ['PPH', 'PPh']], lebar: 4 },
     { kunci: 'tarif', label: 'Tarif (%)', jenis: 'angka', lebar: 4 },
     { kunci: 'akun_id', label: 'Akun', jenis: 'kombo', pilihan: akun, lebar: 12, bantuan: 'PPN masukan: akun aset. PPh dipotong: akun utang pajak.' },
-    { kunci: 'naik_tanpa_npwp', label: '', jenis: 'centang', labelCentang: 'Tarif dua kali lipat bila penerima tanpa NPWP (PPh 23)', lebar: 8 },
-    { kunci: 'aktif', label: '', jenis: 'centang', labelCentang: 'Kode pajak aktif', lebar: 4 },
+    { kunci: 'persen_naik_tanpa_npwp', label: 'Kenaikan tarif tanpa NPWP (%)', jenis: 'angka', lebar: 4, bantuan: 'PPh 23: 100. PPh 21: 20. Isi 0 bila tidak ada kenaikan.' },
+    { kunci: 'aktif', label: '', jenis: 'centang', labelCentang: 'Kode pajak aktif', lebar: 8 },
   ];
   return (
     <>
       <Kepala
         judul="Kode pajak"
         sub="Pajak dihitung dari dasar dikali tarif lalu dibulatkan ke bawah ke rupiah penuh."
-        aksi={punya('SPV_AKUNTANSI') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', jenis: 'PPH', tarif: '', akun_id: '', naik_tanpa_npwp: false, aktif: true })}>Tambah kode pajak</Tombol>}
+        aksi={punya('KASUBAG_KEUANGAN') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', jenis: 'PPH', tarif: '', akun_id: '', persen_naik_tanpa_npwp: 0, aktif: true })}>Tambah kode pajak</Tombol>}
       />
       <Muat kueri={q}>
         {(data) => (
@@ -475,11 +475,11 @@ export function HalamanPajak() {
                     <td>
                       {p.akun_kode} {p.akun_nama}
                     </td>
-                    <td>{p.naik_tanpa_npwp ? 'Dua kali lipat' : '-'}</td>
+                    <td>{Number(p.persen_naik_tanpa_npwp) ? `Naik ${angka(p.persen_naik_tanpa_npwp)}%` : '-'}</td>
                     <td>{p.aktif ? 'Aktif' : 'Nonaktif'}</td>
                     <td className="aksi-baris">
-                      {punya('SPV_AKUNTANSI') && (
-                        <Tombol kecil varian="hantu" onClick={() => setForm({ ...p, tarif: Number(p.tarif), naik_tanpa_npwp: !!p.naik_tanpa_npwp, aktif: !!p.aktif })}>
+                      {punya('KASUBAG_KEUANGAN') && (
+                        <Tombol kecil varian="hantu" onClick={() => setForm({ ...p, tarif: Number(p.tarif), persen_naik_tanpa_npwp: Number(p.persen_naik_tanpa_npwp), aktif: !!p.aktif })}>
                           Ubah
                         </Tombol>
                       )}
@@ -526,7 +526,7 @@ export function HalamanRekening() {
       <Kepala
         judul="Rekening bank"
         sub="Rekening sumber pembayaran. Saldo buku dihitung dari jurnal."
-        aksi={punya('MANAJER_KEUANGAN') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', bank_nama: '', nomor_rekening: '', atas_nama: '', akun_id: '', aktif: true })}>Tambah rekening</Tombol>}
+        aksi={punya('WAKIL_DEKAN_2') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', bank_nama: '', nomor_rekening: '', atas_nama: '', akun_id: '', aktif: true })}>Tambah rekening</Tombol>}
       />
       <Muat kueri={q}>
         {(data) => (
@@ -558,7 +558,7 @@ export function HalamanRekening() {
                     <td className="angka">{rupiah(r.saldo_buku)}</td>
                     <td>{r.aktif ? 'Aktif' : 'Nonaktif'}</td>
                     <td className="aksi-baris">
-                      {punya('MANAJER_KEUANGAN') && (
+                      {punya('WAKIL_DEKAN_2') && (
                         <Tombol kecil varian="hantu" onClick={() => setForm({ ...r, atas_nama: r.atas_nama || '', aktif: !!r.aktif })}>
                           Ubah
                         </Tombol>
@@ -594,9 +594,9 @@ export function HalamanDepartemen() {
   return (
     <>
       <Kepala
-        judul="Departemen"
-        sub="Departemen menentukan lingkup persetujuan Kepala Departemen dan pembebanan biaya."
-        aksi={punya('ADMIN') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', aktif: true })}>Tambah departemen</Tombol>}
+        judul="Unit kerja"
+        sub="Unit kerja menentukan lingkup persetujuan pimpinan unit dan pembebanan biaya."
+        aksi={punya('ADMIN') && <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', aktif: true })}>Tambah unit kerja</Tombol>}
       />
       <Muat kueri={q}>
         {(data) => (
@@ -632,17 +632,17 @@ export function HalamanDepartemen() {
       </Muat>
       {form && (
         <FormDialog
-          judul={form.id ? `Ubah ${form.kode}` : 'Tambah departemen'}
+          judul={form.id ? `Ubah ${form.kode}` : 'Tambah unit kerja'}
           awal={form}
           ubah={!!form.id}
           kolom={[
             { kunci: 'kode', label: 'Kode', lebar: 4, kunciSaatUbah: true, transform: (x) => x.toUpperCase(), bantuan: '2 sampai 10 huruf kapital atau angka.' },
-            { kunci: 'nama', label: 'Nama departemen', lebar: 8 },
-            { kunci: 'aktif', label: '', jenis: 'centang', labelCentang: 'Departemen aktif', lebar: 12 },
+            { kunci: 'nama', label: 'Nama unit kerja', lebar: 8 },
+            { kunci: 'aktif', label: '', jenis: 'centang', labelCentang: 'Unit kerja aktif', lebar: 12 },
           ]}
           simpan={(v) => (form.id ? api.put(`/departemen/${form.id}`, { nama: v.nama, aktif: v.aktif }) : api.post('/departemen', v))}
           onTutup={() => setForm(null)}
-          labelSimpan="Simpan departemen"
+          labelSimpan="Simpan unit kerja"
         />
       )}
     </>

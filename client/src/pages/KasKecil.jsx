@@ -67,8 +67,8 @@ function FormDana({ awal, onTutup }) {
         <Kolom label="Nama dana" galat={f.galat.nama} lebar={5}>
           <Masukan {...f.ikat('nama')} salah={!!f.galat.nama} />
         </Kolom>
-        <Kolom label="Departemen" galat={f.galat.departemen_id} lebar={4}>
-          <Pilihan pilihan={(dept.data || []).filter((d) => d.aktif).map((d) => [d.id, d.nama])} kosong="Pilih departemen" {...f.ikat('departemen_id')} salah={!!f.galat.departemen_id} />
+        <Kolom label="Unit kerja" galat={f.galat.departemen_id} lebar={4}>
+          <Pilihan pilihan={(dept.data || []).filter((d) => d.aktif).map((d) => [d.id, d.nama])} kosong="Pilih unit kerja" {...f.ikat('departemen_id')} salah={!!f.galat.departemen_id} />
         </Kolom>
         <Kolom label="Pemegang dana" galat={f.galat.pemegang_id} bantuan="Hanya pengguna berperan Pemegang Kas Kecil." lebar={6}>
           <Pilihan pilihan={(pemegang.data || []).map((u) => [u.id, `${u.nama_lengkap}${u.jabatan ? `, ${u.jabatan}` : ''}`])} kosong="Pilih pemegang" {...f.ikat('pemegang_id')} salah={!!f.galat.pemegang_id} />
@@ -94,7 +94,7 @@ export function HalamanDana() {
   const { punya, pengguna } = useAuth();
   const q = useDana();
   const [form, setForm] = useState(null);
-  const bolehUbah = punya('MANAJER_KEUANGAN');
+  const bolehUbah = punya('WAKIL_DEKAN_2');
   return (
     <>
       <Kepala
@@ -102,7 +102,7 @@ export function HalamanDana() {
         sub="Sistem imprest: dana tetap = uang tunai di tangan + bukti yang sudah dibayar tetapi belum diganti."
         aksi={
           <>
-            {punya('AKUNTANSI') && <TautanTombol ke="/bkk/baru?jenis=PEMBENTUKAN_KAS_KECIL">Bentuk atau tambah dana</TautanTombol>}
+            {punya('STAF_KEUANGAN') && <TautanTombol ke="/bkk/baru?jenis=PEMBENTUKAN_KAS_KECIL">Bentuk atau tambah dana</TautanTombol>}
             {bolehUbah && (
               <Tombol varian="utama" ikon="tambah" onClick={() => setForm({ kode: '', nama: '', pemegang_id: '', departemen_id: '', akun_id: '', dana_diusulkan: '', batas_transaksi: '', aktif: true })}>
                 Tambah dana
@@ -411,7 +411,7 @@ function IsiDetailPKK({ k }) {
                 ['Dana kas kecil', k.dana_nama],
                 ['Pemegang dana', k.pemegang_nama],
                 ['Pemohon', k.dibuat_nama],
-                ['Departemen', k.departemen_nama],
+                ['Unit kerja', k.departemen_nama],
                 ['Akun pembebanan', `${k.akun_kode} ${k.akun_nama}`],
                 ['Jumlah', rupiah(k.jumlah)],
                 k.tanggal_bayar && ['Tanggal dibayar', tanggal(k.tanggal_bayar, true)],
@@ -701,13 +701,13 @@ function IsiDetailPDK({ p }) {
                 Batalkan
               </Tombol>
             )}
-            {punya('AKUNTANSI') && p.status === 'DIAJUKAN' && (
+            {punya('STAF_KEUANGAN') && p.status === 'DIAJUKAN' && (
               <Tombol varian="bahaya" onClick={tolak} disabled={aksi.sibuk}>
                 Tolak
               </Tombol>
             )}
             <TombolCetak jenis="PDK" id={p.id} />
-            {punya('AKUNTANSI') && p.status === 'DIAJUKAN' && (
+            {punya('STAF_KEUANGAN') && p.status === 'DIAJUKAN' && (
               <TautanTombol ke={`/bkk/baru?jenis=PENGISIAN_KAS_KECIL&sumber_id=${p.id}`} varian="utama" ikon="keluar">Buat BKK pengisian</TautanTombol>
             )}
             {bisaUbah && (
@@ -754,12 +754,12 @@ function IsiDetailPDK({ p }) {
             </table>
             <TotalRingkas baris={[['Total pengisian', p.total, true]]} nilaiTerbilang={p.total} />
           </Kartu>
-          <Kartu judul="Rekap per akun dan departemen" rapat>
+          <Kartu judul="Rekap per akun dan unit kerja" rapat>
             <table className="tabel">
               <thead>
                 <tr>
                   <th>Akun</th>
-                  <th>Departemen</th>
+                  <th>Unit kerja</th>
                   <th className="angka">Bukti</th>
                   <th className="angka">Jumlah</th>
                 </tr>
@@ -814,7 +814,7 @@ export function DaftarOpname() {
       <Kepala
         judul="Opname kas kecil"
         sub="Penghitungan fisik uang tunai secara mendadak oleh pemeriksa yang bukan pemegang dana."
-        aksi={punya('AUDITOR', 'SPV_AKUNTANSI') && <TautanTombol ke="/opname/baru" varian="utama" ikon="tambah">Opname baru</TautanTombol>}
+        aksi={punya('AUDITOR', 'KASUBAG_KEUANGAN') && <TautanTombol ke="/opname/baru" varian="utama" ikon="tambah">Opname baru</TautanTombol>}
       />
       <Muat kueri={q}>
         {(data) => (
@@ -1029,7 +1029,7 @@ export function DetailOpname() {
             />
             {selisih !== 0 && (
               <Pesan jenis={selisih < 0 ? 'galat' : 'peringatan'} judul={selisih < 0 ? 'Uang tunai kurang' : 'Uang tunai lebih'}>
-                Selisih {rupiah(Math.abs(selisih))}. Minta penjelasan tertulis pemegang dana; penyelesaiannya dicatat melalui bukti memorial yang disetujui Manajer Keuangan.
+                Selisih {rupiah(Math.abs(selisih))}. Minta penjelasan tertulis pemegang dana; penyelesaiannya dicatat melalui bukti memorial yang disetujui Wakil Dekan II.
               </Pesan>
             )}
             <div className="grid-2-1">

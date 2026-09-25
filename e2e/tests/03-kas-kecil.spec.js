@@ -7,9 +7,9 @@ test.describe.serial('Kas kecil sistem imprest', () => {
   let urlPDK;
 
   test('pengeluaran di atas batas per transaksi ditolak, pengeluaran wajar tersimpan dan diajukan', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'staf1');
+    const { page, tutup } = await sebagai(browser, 'dosen1');
     await page.goto('/pkk/baru');
-    await pilihOpsi(page.getByLabel('Dana kas kecil'), 'Kantor Pusat');
+    await pilihOpsi(page.getByLabel('Dana kas kecil'), 'Dekanat');
     await page.getByLabel('Jumlah').fill('1500000');
     await page.getByLabel('Keperluan').fill('Pembelian kursi lipat');
     await pilihKombo(page.getByLabel('Akun pembebanan'), '6-1106');
@@ -28,7 +28,7 @@ test.describe.serial('Kas kecil sistem imprest', () => {
   });
 
   test('atasan menyetujui dan pemegang kas kecil membayar tunai dengan nomor nota', async ({ browser }) => {
-    const atasan = await sebagai(browser, 'kaumum');
+    const atasan = await sebagai(browser, 'kaprodiakt');
     await atasan.page.goto(urlPKK);
     await setujui(atasan.page);
     await atasan.tutup();
@@ -46,7 +46,7 @@ test.describe.serial('Kas kecil sistem imprest', () => {
   test('pemegang dana menyusun pengisian kembali dari bukti yang sudah dibayar', async ({ browser }) => {
     const { page, tutup } = await sebagai(browser, 'kaskecil1');
     await page.goto('/pdk/baru');
-    await pilihOpsi(page.getByLabel('Dana kas kecil'), 'Kantor Pusat');
+    await pilihOpsi(page.getByLabel('Dana kas kecil'), 'Dekanat');
     await expect(page.getByRole('row', { name: /Pembelian lampu ruang rapat/ })).toBeVisible();
     await page.getByRole('button', { name: 'Pilih semua' }).click();
     await page.getByRole('button', { name: 'Simpan sebagai draf' }).click();
@@ -57,14 +57,14 @@ test.describe.serial('Kas kecil sistem imprest', () => {
     await tutup();
   });
 
-  test('akuntansi membuat BKK pengisian kembali dengan rekap per akun', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'akt1');
+  test('staf keuangan membuat BKK pengisian kembali dengan rekap per akun', async ({ browser }) => {
+    const { page, tutup } = await sebagai(browser, 'stafkeu1');
     await page.goto(urlPDK);
     await selesaiMemuat(page);
     const total = await page.locator('.total-ringkas .baris.besar .angka').first().innerText();
     await page.getByRole('link', { name: 'Buat BKK pengisian' }).click();
     await expect(page.locator('tr.dipilih')).toHaveCount(1);
-    await pilihOpsi(page.getByLabel('Rekening sumber'), 'Bank BCA');
+    await pilihOpsi(page.getByLabel('Rekening sumber'), 'Bank BJB');
     await page.getByLabel('Metode bayar').selectOption('CEK');
     await page.getByRole('button', { name: 'Simpan sebagai draf' }).click();
     await expect(judulHalaman(page)).toHaveText(/^BKK\//);
@@ -80,7 +80,7 @@ test.describe.serial('Kas kecil sistem imprest', () => {
 
     const { page, tutup } = await sebagai(browser, 'auditor1');
     await page.goto('/opname/baru');
-    await pilihOpsi(page.getByLabel('Dana kas kecil'), 'Kas Kecil Pabrik');
+    await pilihOpsi(page.getByLabel('Dana kas kecil'), 'Kas Kecil Tata Usaha');
     await expect(page.getByText('Saldo tunai seharusnya')).toBeVisible();
     await page.getByLabel('Jumlah kertas 100000').fill('70');
     await page.getByLabel('Jumlah kertas 50000').fill('10');

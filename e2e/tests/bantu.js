@@ -17,8 +17,8 @@ export async function masuk(page, username, kataSandi = sandi(username)) {
  * Buka sesi (konteks peramban) baru sebagai pengguna tertentu. window.print diganti penghitung
  * agar uji cetak tidak membuka dialog cetak.
  */
-export async function sebagai(browser, username) {
-  const ctx = await browser.newContext({ locale: 'id-ID', timezoneId: 'Asia/Jakarta', viewport: { width: 1440, height: 900 } });
+export async function sebagai(browser, username, { viewport = { width: 1440, height: 900 } } = {}) {
+  const ctx = await browser.newContext({ locale: 'id-ID', timezoneId: 'Asia/Jakarta', viewport });
   const page = await ctx.newPage();
   await page.addInitScript(() => {
     window.__cetak = 0;

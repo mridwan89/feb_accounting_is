@@ -9,7 +9,7 @@ import { posisiDana } from './master.js';
 
 export const router = Router();
 
-const PERAN_LAPORAN = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'AUDITOR'];
+const PERAN_LAPORAN = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'AUDITOR'];
 const tglValid = (t) => typeof t === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(t);
 
 function rentang(q) {
@@ -397,7 +397,7 @@ router.get('/laporan/pengeluaran-departemen', perlu(...PERAN_LAPORAN), async (re
 });
 
 // LAP-13 Laporan pengecualian untuk Audit Internal
-router.get('/laporan/pengecualian', perlu('AUDITOR', 'MANAJER_KEUANGAN', 'DIREKTUR', 'SPV_AKUNTANSI'), async (req, res) => {
+router.get('/laporan/pengecualian', perlu('AUDITOR', 'WAKIL_DEKAN_2', 'DEKAN', 'KASUBAG_KEUANGAN'), async (req, res) => {
   const { dari, sampai } = rentang(req.query);
   const antara = [`${dari} 00:00:00`, `${sampai} 23:59:59`];
   const selisihDisetujui = await semua(

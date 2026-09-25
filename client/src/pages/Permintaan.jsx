@@ -308,7 +308,7 @@ function IsiDetailPP({ pp }) {
                 ['Tanggal permintaan', tanggal(pp.tanggal, true)],
                 ['Tanggal dibutuhkan', tanggal(pp.tanggal_dibutuhkan, true)],
                 ['Pemohon', pp.dibuat_nama],
-                ['Departemen', pp.departemen_nama],
+                ['Unit kerja', pp.departemen_nama],
                 ['Penerima', pp.pemasok_id ? `${pp.penerima_nama} (pemasok terdaftar)` : pp.penerima_nama],
                 ['Rekening penerima', rekening],
                 ['Dokumen pendukung', pp.dokumen_pendukung],
@@ -345,7 +345,7 @@ function IsiDetailPP({ pp }) {
         </div>
         <div>
           <PanelPersetujuan jenis="PP" id={pp.id} riwayat={pp.persetujuan} boleh={pp.boleh_memutuskan} />
-          <PanelLampiran jenis="PP" id={pp.id} bolehUnggah={(pembuat && !['BATAL', 'DIBAYAR'].includes(pp.status)) || (punya('AKUNTANSI', 'KASIR') && ['DISETUJUI', 'DIPROSES', 'DIBAYAR'].includes(pp.status))} bolehHapus={bisaUbah} />
+          <PanelLampiran jenis="PP" id={pp.id} bolehUnggah={(pembuat && !['BATAL', 'DIBAYAR'].includes(pp.status)) || (punya('STAF_KEUANGAN', 'KASIR') && ['DISETUJUI', 'DIPROSES', 'DIBAYAR'].includes(pp.status))} bolehHapus={bisaUbah} />
         </div>
       </div>
     </>

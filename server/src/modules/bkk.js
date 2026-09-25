@@ -25,7 +25,7 @@ export const JENIS_BKK = {
   PENGISIAN_KAS_KECIL: 'Pengisian kembali kas kecil',
 };
 
-const PERAN_LIHAT = ['AKUNTANSI', 'SPV_AKUNTANSI', 'MANAJER_KEUANGAN', 'DIREKTUR', 'KASIR', 'AUDITOR'];
+const PERAN_LIHAT = ['STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'WAKIL_DEKAN_2', 'DEKAN', 'KASIR', 'AUDITOR'];
 
 daftarkanDokumen('BKK', {
   tabel: 'bukti_kas_keluar',
@@ -333,9 +333,9 @@ export async function batalBKK(conn, ctx, bkkId, alasan) {
   if (!alasan?.trim()) throw galatMasukan('Alasan pembatalan wajib diisi.', { alasan: 'Wajib diisi.' });
   const bkk = await kunciBaris(conn, 'bukti_kas_keluar', bkkId, 'BKK');
   if (['DRAFT', 'DITOLAK', 'DIAJUKAN'].includes(bkk.status)) {
-    if (bkk.dibuat_oleh !== ctx.user.id && !punya(ctx.user, 'MANAJER_KEUANGAN')) throw galatAkses('BKK ini hanya dapat dibatalkan pembuatnya atau Manajer Keuangan.');
+    if (bkk.dibuat_oleh !== ctx.user.id && !punya(ctx.user, 'WAKIL_DEKAN_2')) throw galatAkses('BKK ini hanya dapat dibatalkan pembuatnya atau Manajer Keuangan.');
   } else if (bkk.status === 'DISETUJUI') {
-    if (!punya(ctx.user, 'MANAJER_KEUANGAN')) throw galatAkses('BKK yang sudah disetujui hanya dapat dibatalkan Manajer Keuangan.');
+    if (!punya(ctx.user, 'WAKIL_DEKAN_2')) throw galatAkses('BKK yang sudah disetujui hanya dapat dibatalkan Manajer Keuangan.');
   } else {
     pastikanStatus(bkk, ['DRAFT', 'DITOLAK', 'DIAJUKAN', 'DISETUJUI'], 'dibatalkan');
   }
@@ -405,7 +405,7 @@ export async function detailBKK(db, user, bkkId) {
   };
 }
 
-router.get('/bkk/sumber', perlu('AKUNTANSI'), async (req, res) => {
+router.get('/bkk/sumber', perlu('STAF_KEUANGAN'), async (req, res) => {
   const jenis = String(req.query.jenis || '');
   if (jenis === 'PEMBAYARAN_FAKTUR') {
     if (req.query.pemasok_id) {
@@ -454,17 +454,17 @@ router.get('/bkk/sumber', perlu('AKUNTANSI'), async (req, res) => {
 router.get('/bkk/:id', perlu(...PERAN_LIHAT), async (req, res) => {
   res.json(await detailBKK(pool, req.user, Number(req.params.id)));
 });
-router.post('/bkk', perlu('AKUNTANSI'), async (req, res) => {
+router.post('/bkk', perlu('STAF_KEUANGAN'), async (req, res) => {
   res.status(201).json(await tx((conn) => buatBKK(conn, req.ctx, req.body)));
 });
-router.put('/bkk/:id', perlu('AKUNTANSI'), async (req, res) => {
+router.put('/bkk/:id', perlu('STAF_KEUANGAN'), async (req, res) => {
   await tx((conn) => ubahBKK(conn, req.ctx, Number(req.params.id), req.body));
   res.json({ ok: true });
 });
-router.post('/bkk/:id/ajukan', perlu('AKUNTANSI'), async (req, res) => {
+router.post('/bkk/:id/ajukan', perlu('STAF_KEUANGAN'), async (req, res) => {
   res.json(await tx((conn) => ajukanBKK(conn, req.ctx, Number(req.params.id))));
 });
-router.post('/bkk/:id/batal', perlu('AKUNTANSI', 'MANAJER_KEUANGAN'), async (req, res) => {
+router.post('/bkk/:id/batal', perlu('STAF_KEUANGAN', 'WAKIL_DEKAN_2'), async (req, res) => {
   await tx((conn) => batalBKK(conn, req.ctx, Number(req.params.id), req.body?.alasan));
   res.json({ ok: true });
 });

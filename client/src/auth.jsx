@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
       status,
       pesan,
       pengguna: data?.pengguna || null,
-      perusahaan: data?.perusahaan || {},
+      institusi: data?.institusi || {},
       punya: (...daftar) => daftar.flat().some((p) => peran.includes(p)),
       masuk,
       keluar,

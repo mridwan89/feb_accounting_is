@@ -1,4 +1,4 @@
-// US-15, US-16: rekonsiliasi bank oleh Kepala Bagian Akuntansi (bukan Kasir) serta tutup dan buka periode.
+// US-15, US-16: rekonsiliasi bank oleh Kepala Subbagian Keuangan (bukan Kasir) serta tutup dan buka periode.
 import { test, expect } from '@playwright/test';
 import { notifikasi, pilihOpsi, sebagai, selesaiMemuat, statusDokumen } from './bantu.js';
 
@@ -11,12 +11,12 @@ test.describe.serial('Rekonsiliasi bank dan periode akuntansi', () => {
     await tutup();
   });
 
-  test('Kepala Bagian Akuntansi menyusun rekonsiliasi; selisih mencegah finalisasi', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'spvakt');
+  test('Kepala Subbagian Keuangan menyusun rekonsiliasi; selisih mencegah finalisasi', async ({ browser }) => {
+    const { page, tutup } = await sebagai(browser, 'kasubag');
     await page.goto('/rekonsiliasi');
     await page.getByRole('button', { name: 'Buat rekonsiliasi' }).click();
     const dialog = page.getByRole('dialog');
-    await pilihOpsi(dialog.getByLabel('Rekening', { exact: true }), 'Bank Mandiri');
+    await pilihOpsi(dialog.getByLabel('Rekening', { exact: true }), 'Bank BSI');
     await dialog.getByLabel('Bulan').selectOption('9');
     await dialog.getByLabel('Saldo akhir menurut rekening koran').fill('500000000');
     await dialog.getByRole('button', { name: 'Buat rekonsiliasi' }).click();
@@ -34,12 +34,12 @@ test.describe.serial('Rekonsiliasi bank dan periode akuntansi', () => {
     await tutup();
   });
 
-  test('Manajer Keuangan menutup periode lalu membukanya kembali dengan alasan', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'mankeu');
+  test('Wakil Dekan II menutup periode lalu membukanya kembali dengan alasan', async ({ browser }) => {
+    const { page, tutup } = await sebagai(browser, 'wd2');
     await page.goto('/periode');
     await page.getByLabel('Pilih periode').selectOption('2026-8');
     await selesaiMemuat(page);
-    await expect(page.getByText('Rekonsiliasi bank Bank BCA Giro Operasional')).toBeVisible();
+    await expect(page.getByText('Rekonsiliasi bank Bank BJB Rekening Operasional FEB')).toBeVisible();
     await page.getByRole('button', { name: 'Tutup periode Agustus 2026' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Tutup periode' }).click();
     await expect(notifikasi(page)).toContainText('ditutup');

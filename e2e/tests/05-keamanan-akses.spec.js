@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { masuk, notifikasi, pilihOpsi, sebagai } from './bantu.js';
 
 test.describe.serial('Keamanan dan hak akses', () => {
-  test('Administrator tidak dapat memberi peran Kasir dan Staf Akuntansi Utang pada satu akun', async ({ browser }) => {
+  test('Administrator tidak dapat memberi peran Kasir Fakultas dan Staf Keuangan pada satu akun', async ({ browser }) => {
     const { page, tutup } = await sebagai(browser, 'admin');
     await page.goto('/admin/pengguna');
     await page.getByRole('button', { name: 'Tambah pengguna' }).click();
@@ -11,13 +11,13 @@ test.describe.serial('Keamanan dan hak akses', () => {
     await dialog.getByLabel('Nama pengguna').fill('kasir2');
     await dialog.getByLabel('Nama lengkap').fill('Lina Marlina');
     await dialog.getByLabel('Jabatan').fill('Kasir Pengganti');
-    await pilihOpsi(dialog.getByLabel('Departemen', { exact: true }), 'Keuangan');
+    await pilihOpsi(dialog.getByLabel('Unit kerja', { exact: true }), 'Subbagian Keuangan');
     await dialog.getByLabel('Kata sandi awal').fill('Mulai2026x');
-    await dialog.getByLabel(/^Kasir/).check();
-    await dialog.getByLabel(/^Staf Akuntansi Utang/).check();
+    await dialog.getByLabel(/^Kasir Fakultas/).check();
+    await dialog.getByLabel(/^Staf Keuangan/).check();
     await expect(dialog.locator('.pesan.galat')).toContainText('tidak boleh dipegang satu akun');
     await expect(dialog.getByRole('button', { name: 'Simpan pengguna' })).toBeDisabled();
-    await dialog.getByLabel(/^Staf Akuntansi Utang/).uncheck();
+    await dialog.getByLabel(/^Staf Keuangan/).uncheck();
     await dialog.getByRole('button', { name: 'Simpan pengguna' }).click();
     await expect(notifikasi(page)).toContainText('wajib mengganti kata sandi');
     await tutup();
@@ -41,7 +41,7 @@ test.describe.serial('Keamanan dan hak akses', () => {
   });
 
   test('pemohon hanya melihat menu miliknya dan ditolak saat membuka daftar BKK', async ({ browser }) => {
-    const { page, tutup } = await sebagai(browser, 'staf2');
+    const { page, tutup } = await sebagai(browser, 'dosen2');
     await expect(page.getByRole('link', { name: 'Bukti kas keluar' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Faktur pemasok' })).toHaveCount(0);
     await page.goto('/bkk');
@@ -51,12 +51,12 @@ test.describe.serial('Keamanan dan hak akses', () => {
 
   test('lima kali salah kata sandi mengunci akun', async ({ page }) => {
     for (let i = 1; i <= 4; i += 1) {
-      await masuk(page, 'kapemasaran', `Salah${i}xx`);
+      await masuk(page, 'kaprodimnj', `Salah${i}xx`);
       await expect(page.locator('.pesan.galat')).toContainText('Nama pengguna atau kata sandi salah');
     }
-    await masuk(page, 'kapemasaran', 'Salah5xx');
+    await masuk(page, 'kaprodimnj', 'Salah5xx');
     await expect(page.locator('.pesan.galat')).toContainText('Akun dikunci');
-    await masuk(page, 'kapemasaran', 'Demo2026');
+    await masuk(page, 'kaprodimnj', 'Demo2026');
     await expect(page.locator('.pesan.galat')).toContainText('Akun terkunci sampai');
   });
 });

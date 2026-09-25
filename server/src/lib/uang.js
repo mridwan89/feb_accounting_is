@@ -27,6 +27,32 @@ export function hitungPajak(dasar, tarifPersen) {
   return Number(pajakSen / 100n);
 }
 
+/**
+ * Bagi `total` sebanding `bobot` (daftar nilai uang). Pembagian dalam rupiah penuh bila total bulat rupiah,
+ * sisa pembulatan masuk ke bobot terbesar sehingga jumlah hasil selalu sama persis dengan total.
+ */
+export function bagiProporsional(total, bobot) {
+  const unit = keSen(total) % 100 === 0 ? 100n : 1n;
+  const t = BigInt(keSen(total)) / unit;
+  const b = bobot.map((x) => BigInt(keSen(x)));
+  const jumlahBobot = b.reduce((a, x) => a + x, 0n);
+  if (jumlahBobot === 0n) return bobot.map(() => 0);
+  const hasil = b.map((x) => (t * x) / jumlahBobot);
+  const sisa = t - hasil.reduce((a, x) => a + x, 0n);
+  let terbesar = 0;
+  b.forEach((x, i) => {
+    if (x > b[terbesar]) terbesar = i;
+  });
+  hasil[terbesar] += sisa;
+  return hasil.map((x) => Number(x * unit) / 100);
+}
+
+/** Tarif pajak efektif: tarif dinaikkan sekian persen bila penerima tanpa NPWP (PPh 23: 100%, PPh 21: 20%). */
+export function tarifEfektif(pajak, tanpaNpwp) {
+  const naik = tanpaNpwp ? Number(pajak.persen_naik_tanpa_npwp || 0) : 0;
+  return Math.round(Number(pajak.tarif) * (100 + naik) * 10) / 1000;
+}
+
 export const sama = (a, b) => keSen(a) === keSen(b);
 export const kurang = (a, b) => dariSen(keSen(a) - keSen(b));
 export const tambah = (a, b) => dariSen(keSen(a) + keSen(b));

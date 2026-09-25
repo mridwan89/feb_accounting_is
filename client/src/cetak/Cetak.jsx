@@ -36,16 +36,18 @@ const LUNAS = { BKK: ['DIBAYAR'], PP: ['DIBAYAR'], PUM: ['DIBAYAR', 'SELESAI'], 
 // ---------------------------------------------------------------- bagian formulir
 
 export function Kop({ tanda, subTanda, pratinjau }) {
-  const { perusahaan: p } = useAuth();
+  const { institusi: p } = useAuth();
   return (
     <div className="kop">
       <div>
-        <div className="nama">{p.perusahaan_nama}</div>
+        {p.institusi_induk && <div className="induk">{p.institusi_induk}</div>}
+        <div className="nama">{p.institusi_nama}</div>
+        {p.institusi_subjudul && <div className="subjudul">{p.institusi_subjudul}</div>}
         <div className="alamat">
-          {[p.perusahaan_alamat, p.perusahaan_kota].filter(Boolean).join(', ')}
-          {p.perusahaan_telepon ? ` · Telp. ${p.perusahaan_telepon}` : ''}
+          {p.institusi_alamat}
+          {p.institusi_telepon ? ` · Telp. ${p.institusi_telepon}` : ''}
+          {p.institusi_email ? ` · ${p.institusi_email}` : ''}
         </div>
-        {p.perusahaan_npwp && <div className="alamat">NPWP {p.perusahaan_npwp}</div>}
       </div>
       {tanda && (
         <div className={`tanda-cetak ${pratinjau ? 'pratinjau' : ''}`}>
@@ -182,7 +184,7 @@ function CetakPO({ d, opsi }) {
           satu
           butir={[
             ['Tanggal PO', tanggal(d.tanggal, true)],
-            ['Departemen peminta', d.departemen_nama],
+            ['Unit peminta', d.departemen_nama],
             ['Tanggal kirim', tanggal(d.tanggal_kirim, true)],
             ['Termin pembayaran', `${d.termin_hari} hari setelah faktur`],
           ]}
@@ -228,7 +230,7 @@ function CetakPO({ d, opsi }) {
         Faktur wajib mencantumkan nomor PO ini dan dikirim ke Bagian Akuntansi. Barang atau jasa yang tidak sesuai pesanan dapat ditolak. Pembayaran dilakukan sesuai termin setelah penerimaan dan faktur lengkap.
       </div>
       <Persetujuan riwayat={d.persetujuan} />
-      <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Dibuat, Staf Pembelian', d.dibuat_nama], ['Disetujui, Kepala Departemen'], ['Disetujui, Direktur (bila perlu)'], ['Diterima, pemasok']]} />
+      <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Dibuat, Staf Pengadaan', d.dibuat_nama], ['Disetujui, Pimpinan Unit'], ['Disetujui, Dekan (bila perlu)'], ['Diterima, pemasok']]} />
     </>
   );
 }
@@ -281,7 +283,7 @@ function CetakPP({ d, opsi }) {
           ['Tanggal', tanggal(d.tanggal, true)],
           ['Tanggal dibutuhkan', tanggal(d.tanggal_dibutuhkan, true)],
           ['Pemohon', d.dibuat_nama],
-          ['Departemen', d.departemen_nama],
+          ['Unit kerja', d.departemen_nama],
           ['Dibayarkan kepada', d.penerima_nama],
           ['Rekening penerima', d.penerima_bank_rekening ? `${d.penerima_bank_nama} ${d.penerima_bank_rekening} a.n. ${d.penerima_bank_atas_nama}` : '-'],
           ['Dokumen pendukung', d.dokumen_pendukung],
@@ -323,7 +325,7 @@ function CetakPUM({ d, opsi }) {
         butir={[
           ['Tanggal', tanggal(d.tanggal, true)],
           ['Pemohon', d.dibuat_nama],
-          ['Departemen', d.departemen_nama],
+          ['Unit kerja', d.departemen_nama],
           ['Kegiatan selesai', tanggal(d.tanggal_selesai_kegiatan, true)],
           ['Tenggat pertanggungjawaban', tanggal(d.tanggal_batas_pj, true)],
           ['Bukti kas keluar', d.bkk_nomor],
@@ -333,7 +335,7 @@ function CetakPUM({ d, opsi }) {
       <TabelUang kolom={[['Uraian'], ['Jumlah', 'angka']]} baris={<tr><td>Uang muka kerja</td><td className="angka tebal">{rupiah(d.jumlah)}</td></tr>} />
       <Terbilang nilai={d.jumlah} />
       <div className="cetak-catatan">
-        Saya bersedia mempertanggungjawabkan uang muka ini dengan bukti yang sah paling lambat {tanggal(d.tanggal_batas_pj, true)}. Selama pertanggungjawaban lewat tenggat, saya tidak dapat mengajukan uang muka baru, dan sisa yang tidak dapat dipertanggungjawabkan diselesaikan sesuai kebijakan perusahaan.
+        Saya bersedia mempertanggungjawabkan uang muka ini dengan bukti yang sah paling lambat {tanggal(d.tanggal_batas_pj, true)}. Selama pertanggungjawaban lewat tenggat, saya tidak dapat mengajukan uang muka baru, dan sisa yang tidak dapat dipertanggungjawabkan diselesaikan sesuai ketentuan fakultas.
       </div>
       <Persetujuan riwayat={d.persetujuan} />
       <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Pemohon', d.dibuat_nama], ['Disetujui, atasan'], ['Diterima, penerima uang', d.dibuat_nama]]} />
@@ -351,7 +353,7 @@ function CetakPJUM({ d, opsi }) {
           ['Tanggal', tanggal(d.tanggal, true)],
           ['Nomor uang muka', d.uang_muka_nomor],
           ['Pemohon', d.dibuat_nama],
-          ['Departemen', d.departemen_nama],
+          ['Unit kerja', d.departemen_nama],
           ['Keperluan', d.keperluan],
           ['Jumlah uang muka', rupiah(d.jumlah_uang_muka)],
         ]}
@@ -381,7 +383,7 @@ function CetakPJUM({ d, opsi }) {
               <td className="angka">{rupiah(d.jumlah_uang_muka)}</td>
             </tr>
             <tr>
-              <td colSpan={5}>{selisih > 0 ? 'Sisa yang dikembalikan ke kas perusahaan' : selisih < 0 ? 'Kekurangan yang dibayar perusahaan' : 'Selisih'}</td>
+              <td colSpan={5}>{selisih > 0 ? 'Sisa yang dikembalikan ke kas fakultas' : selisih < 0 ? 'Kekurangan yang dibayar fakultas' : 'Selisih'}</td>
               <td className="angka">{rupiah(Math.abs(selisih))}</td>
             </tr>
           </>
@@ -406,7 +408,7 @@ function CetakPKK({ d, opsi }) {
           ['Tanggal', tanggal(d.tanggal, true)],
           ['Dana kas kecil', d.dana_nama],
           ['Pemohon', d.dibuat_nama],
-          ['Departemen', d.departemen_nama],
+          ['Unit kerja', d.departemen_nama],
           ['Akun', `${d.akun_kode} ${d.akun_nama}`],
           ['Pemegang dana', d.pemegang_nama],
         ]}
@@ -469,7 +471,7 @@ function CetakPDK({ d, opsi }) {
       />
       <div className="cetak-bagian">Rekap per akun</div>
       <TabelUang
-        kolom={[['Akun'], ['Departemen'], ['Bukti', 'angka'], ['Jumlah', 'angka']]}
+        kolom={[['Akun'], ['Unit'], ['Bukti', 'angka'], ['Jumlah', 'angka']]}
         baris={d.rekap.map((r) => (
           <tr key={`${r.akun_id}-${r.departemen_id}`}>
             <td>
@@ -550,7 +552,7 @@ function CetakBKK({ d }) {
   const putaran = Math.max(0, ...(d.persetujuan || []).map((p) => p.putaran));
   const langkah = (d.persetujuan || []).filter((p) => p.putaran === putaran);
   const nama = (peran) => langkah.find((p) => p.peran_kode === peran && p.status === 'DISETUJUI')?.diputuskan_nama;
-  const perluDirektur = langkah.some((p) => p.peran_kode === 'DIREKTUR');
+  const perluDekan = langkah.some((p) => p.peran_kode === 'DEKAN');
   return (
     <>
       <Judul judul="Bukti kas keluar" nomor={d.nomor} sub={JENIS_BKK[d.jenis]} />
@@ -643,10 +645,10 @@ function CetakBKK({ d }) {
       <Persetujuan riwayat={d.persetujuan} />
       <TandaTangan
         kolom={[
-          ['Dibuat, Akuntansi', d.dibuat_nama],
-          ['Diperiksa, Ka. Bag. Akuntansi', nama('SPV_AKUNTANSI')],
-          ['Disetujui, Manajer Keuangan', nama('MANAJER_KEUANGAN')],
-          ['Disetujui, Direktur', nama('DIREKTUR') || (perluDirektur ? '' : 'Tidak diperlukan')],
+          ['Dibuat, Staf Keuangan', d.dibuat_nama],
+          ['Diperiksa, Kasubag Keuangan', nama('KASUBAG_KEUANGAN')],
+          ['Disetujui, Wakil Dekan II', nama('WAKIL_DEKAN_2')],
+          ['Disetujui, Dekan', nama('DEKAN') || (perluDekan ? '' : 'Tidak diperlukan')],
           ['Dibayar, Kasir', bayar?.dibayar_nama],
           ['Diterima, penerima'],
         ]}
@@ -683,11 +685,11 @@ function CetakBYR({ d, opsi }) {
           <TabelUang kolom={[['Untuk pembayaran'], ['Jumlah', 'angka']]} baris={<tr><td>{d.bkk_keterangan}</td><td className="angka tebal">{rupiah(d.jumlah)}</td></tr>} />
           <Terbilang nilai={d.jumlah} />
           <div className="cetak-catatan">Rekening tujuan wajib sama persis dengan rekening pemasok yang sudah diverifikasi di SIAPKas. Lampirkan bukti transaksi internet banking pada dokumen ini.</div>
-          <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Disiapkan, Kasir', d.dibayar_nama], ['Dieksekusi, pemegang otorisasi bank'], ['Diperiksa, Ka. Bag. Akuntansi']]} />
+          <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Disiapkan, Kasir', d.dibayar_nama], ['Dieksekusi, pemegang otorisasi bank'], ['Diperiksa, Kasubag Keuangan']]} />
         </>
       ) : (
         <>
-          <p style={{ fontSize: '10pt' }}>Telah terima dari {opsi.perusahaan}:</p>
+          <p style={{ fontSize: '10pt' }}>Telah terima dari {opsi.institusi}:</p>
           <InfoCetak
             butir={[
               ['Jenis warkat', METODE[d.metode]],
@@ -762,7 +764,7 @@ function CetakJM({ d, opsi }) {
       />
       <Terbilang nilai={debit} />
       <Persetujuan riwayat={d.persetujuan} />
-      <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Dibuat', d.dibuat_nama], ['Disetujui, Manajer Keuangan', (d.persetujuan || []).find((p) => p.status === 'DISETUJUI')?.diputuskan_nama]]} />
+      <TandaTangan kota={opsi.kota} tgl={d.tanggal} kolom={[['Dibuat', d.dibuat_nama], ['Disetujui, Wakil Dekan II', (d.persetujuan || []).find((p) => p.status === 'DISETUJUI')?.diputuskan_nama]]} />
     </>
   );
 }
@@ -814,7 +816,7 @@ function CetakRB({ d, opsi }) {
           ['Difinalkan', d.difinalkan_pada ? `${d.difinalkan_nama}, ${waktu(d.difinalkan_pada)}` : 'Belum final'],
         ]}
       />
-      <TandaTangan kota={opsi.kota} tgl={d.difinalkan_pada ? String(d.difinalkan_pada).slice(0, 10) : null} kolom={[['Dibuat, Ka. Bag. Akuntansi', d.dibuat_nama], ['Diketahui, Manajer Keuangan']]} />
+      <TandaTangan kota={opsi.kota} tgl={d.difinalkan_pada ? String(d.difinalkan_pada).slice(0, 10) : null} kolom={[['Dibuat, Kasubag Keuangan', d.dibuat_nama], ['Diketahui, Wakil Dekan II']]} />
     </>
   );
 }
@@ -848,7 +850,7 @@ export function HalamanCetak() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const toast = useToast();
-  const { perusahaan, pengguna } = useAuth();
+  const { institusi, pengguna } = useAuth();
   const url = SUMBER_DATA[jenis]?.(id);
   const q = useApi(url || null);
   const [cetakan, setCetakan] = useState(null);
@@ -889,7 +891,7 @@ export function HalamanCetak() {
         {(d) => {
           const Templat = TEMPLAT[jenis];
           const versiPKK = params.get('versi') || (['DIBAYAR', 'DIGANTI'].includes(d.status) ? 'bukti' : 'permintaan');
-          const opsi = { tanpaHarga: params.get('tanpa_harga') === '1', versi: versiPKK, kota: perusahaan.perusahaan_kota, perusahaan: perusahaan.perusahaan_nama };
+          const opsi = { tanpaHarga: params.get('tanpa_harga') === '1', versi: versiPKK, kota: institusi.institusi_kota, institusi: [institusi.institusi_nama, institusi.institusi_induk].filter(Boolean).join(' ') };
           const draf = STATUS_DRAF.includes(d.status) || (['OPN', 'RB'].includes(jenis) && d.status === 'DRAFT');
           const batal = d.status === 'BATAL';
           const lunas = LUNAS[jenis]?.includes(d.status);

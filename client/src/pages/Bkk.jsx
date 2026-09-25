@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { JENIS_BKK, METODE } from '../konstanta.js';
-import { hariIni, hitungPajak, jumlahkan, rupiah, tanggal } from '../format.js';
+import { hariIni, hitungPajak, jumlahkan, rupiah, tanggal, tarifEfektif } from '../format.js';
 import { useAksi, useApi, useDepartemen, usePajak, usePilihanAkun, usePilihanPemasok, useRekening } from '../components/data.js';
 import { SaringDaftar, TombolCetak, useAksiDokumen, useSaring } from '../components/Dokumen.jsx';
 import { Ikon } from '../components/Ikon.jsx';
@@ -31,7 +31,7 @@ export function DaftarBKK() {
       <Kepala
         judul="Bukti kas keluar"
         sub="Setiap pembayaran dari rekening bank berangkat dari BKK yang sudah disetujui berjenjang."
-        aksi={punya('AKUNTANSI') && <TautanTombol ke="/bkk/baru" varian="utama" ikon="tambah">Buat BKK</TautanTombol>}
+        aksi={punya('STAF_KEUANGAN') && <TautanTombol ke="/bkk/baru" varian="utama" ikon="tambah">Buat BKK</TautanTombol>}
       />
       <Kartu rapat>
         <SaringDaftar saring={saring} status={STATUS_BKK} placeholder="Nomor BKK, penerima, atau dokumen sumber">
@@ -216,7 +216,7 @@ function FormBKK({ bkk, awal }) {
   const tanpaNpwp = v.jenis === 'PERMINTAAN_PEMBAYARAN' ? (pp.data?.pemasok_id ? !pemasok?.npwp : !!v.penerima_tanpa_npwp) : false;
   const nilaiPotongan = potongan.map((p) => {
     const kode = (pajak.data || []).find((x) => String(x.id) === String(p.pajak_id));
-    const tarif = kode ? Number(kode.tarif) * (kode.naik_tanpa_npwp && tanpaNpwp ? 2 : 1) : 0;
+    const tarif = kode ? tarifEfektif(kode, tanpaNpwp) : 0;
     return { ...p, kode, tarif, jumlah: kode ? hitungPajak(p.dasar, tarif) : 0 };
   });
   const totalPotongan = jumlahkan(nilaiPotongan, (p) => p.jumlah);
@@ -322,7 +322,7 @@ function FormBKK({ bkk, awal }) {
           )}
           {pemasok && v.metode_bayar === 'TRANSFER' && !pemasok.rekening_terverifikasi && (
             <div style={{ padding: '12px 16px 0' }}>
-              <Pesan jenis="peringatan">Rekening bank {pemasok.nama} belum diverifikasi Kepala Bagian Akuntansi. BKK dapat disimpan, tetapi baru dapat diajukan setelah rekening diverifikasi.</Pesan>
+              <Pesan jenis="peringatan">Rekening bank {pemasok.nama} belum diverifikasi Kepala Subbagian Keuangan. BKK dapat disimpan, tetapi baru dapat diajukan setelah rekening diverifikasi.</Pesan>
             </div>
           )}
           <div className="tabel-bungkus">
@@ -392,7 +392,7 @@ function FormBKK({ bkk, awal }) {
                       <th>No</th>
                       <th>Uraian</th>
                       <th style={{ width: '32%' }}>Akun pembebanan</th>
-                      <th style={{ width: 180 }}>Departemen</th>
+                      <th style={{ width: 180 }}>Unit kerja</th>
                       <th className="angka">Jumlah</th>
                     </tr>
                   </thead>
@@ -409,7 +409,7 @@ function FormBKK({ bkk, awal }) {
                             {g[`baris.${i}.akun_id`] && <div className="kecil teks-bahaya">{g[`baris.${i}.akun_id`]}</div>}
                           </td>
                           <td>
-                            <Pilihan pilihan={(dept.data || []).map((x) => [x.id, x.nama])} value={u.departemen_id || ''} onChange={(e) => atur('departemen_id', e.target.value)} aria-label="Departemen" />
+                            <Pilihan pilihan={(dept.data || []).map((x) => [x.id, x.nama])} value={u.departemen_id || ''} onChange={(e) => atur('departemen_id', e.target.value)} aria-label="Unit kerja" />
                           </td>
                           <td className="angka">{rupiah(b.jumlah)}</td>
                         </tr>
@@ -420,7 +420,7 @@ function FormBKK({ bkk, awal }) {
               </div>
               <div style={{ padding: '12px 16px' }}>
                 <p className="kecil lemah" style={{ marginTop: 0 }}>
-                  Akuntansi boleh mengoreksi akun dan departemen dari usulan pemohon. Jumlah tidak dapat diubah di sini.
+                  Staf Keuangan boleh mengoreksi akun dan unit kerja dari usulan pemohon. Jumlah tidak dapat diubah di sini.
                 </p>
                 <div className="bagian-judul" style={{ marginBottom: 8 }}>
                   Potongan pajak (PPh)
@@ -453,7 +453,7 @@ function FormBKK({ bkk, awal }) {
                     Tambah potongan PPh
                   </Tombol>
                   {!d.pemasok_id && (
-                    <Centang label="Penerima tidak memiliki NPWP (tarif PPh 23 dua kali lipat)" checked={v.penerima_tanpa_npwp} onChange={(x) => f.atur('penerima_tanpa_npwp', x)} />
+                    <Centang label="Penerima tidak memiliki NPWP (tarif PPh dinaikkan sesuai ketentuan)" checked={v.penerima_tanpa_npwp} onChange={(x) => f.atur('penerima_tanpa_npwp', x)} />
                   )}
                   {d.pemasok_id && pemasok && !pemasok.npwp && <span className="kecil teks-peringatan">Pemasok tanpa NPWP: tarif PPh 23 dikenakan dua kali lipat.</span>}
                 </div>
@@ -568,7 +568,7 @@ function IsiDetailBKK({ bkk }) {
   const aksi = useAksiDokumen('/bkk', bkk.id, 'BKK');
   const pembuat = bkk.dibuat_oleh === pengguna.id;
   const bisaUbah = pembuat && ['DRAFT', 'DITOLAK'].includes(bkk.status);
-  const bisaBatal = (pembuat && ['DRAFT', 'DITOLAK', 'DIAJUKAN'].includes(bkk.status)) || (punya('MANAJER_KEUANGAN') && ['DRAFT', 'DITOLAK', 'DIAJUKAN', 'DISETUJUI'].includes(bkk.status));
+  const bisaBatal = (pembuat && ['DRAFT', 'DITOLAK', 'DIAJUKAN'].includes(bkk.status)) || (punya('WAKIL_DEKAN_2') && ['DRAFT', 'DITOLAK', 'DIAJUKAN', 'DISETUJUI'].includes(bkk.status));
   const rekeningTujuan = bkk.penerima_bank_rekening ? `${bkk.penerima_bank_nama} ${bkk.penerima_bank_rekening} a.n. ${bkk.penerima_bank_atas_nama}` : 'Tidak ada (cek atau bilyet giro)';
   const bayarBerlaku = bkk.pembayaran.find((p) => p.status === 'DIBAYAR');
   return (
@@ -601,7 +601,7 @@ function IsiDetailBKK({ bkk }) {
       <PesanDokumen doc={bkk} labelDok="BKK" perluLampiran={false} />
       {bkk.metode_bayar === 'TRANSFER' && bkk.pemasok_id && !bkk.rekening_terverifikasi && ['DRAFT', 'DITOLAK', 'DIAJUKAN', 'DISETUJUI'].includes(bkk.status) && (
         <Pesan jenis="peringatan" judul="Rekening pemasok belum terverifikasi">
-          Transfer tidak dapat diajukan atau dibayar sebelum Kepala Bagian Akuntansi memverifikasi rekening pemasok.
+          Transfer tidak dapat diajukan atau dibayar sebelum Kepala Subbagian Keuangan memverifikasi rekening pemasok.
         </Pesan>
       )}
       <div className="grid-2-1">
@@ -630,7 +630,7 @@ function IsiDetailBKK({ bkk }) {
                   <tr>
                     <th>Uraian</th>
                     <th>Akun</th>
-                    <th>Departemen</th>
+                    <th>Unit kerja</th>
                     <th className="angka">Debit</th>
                     <th className="angka">Kredit</th>
                   </tr>
@@ -727,7 +727,7 @@ function IsiDetailBKK({ bkk }) {
         </div>
         <div>
           <PanelPersetujuan jenis="BKK" id={bkk.id} riwayat={bkk.persetujuan} boleh={bkk.boleh_memutuskan} />
-          <PanelLampiran jenis="BKK" id={bkk.id} bolehUnggah={bkk.status !== 'BATAL' && punya('AKUNTANSI', 'SPV_AKUNTANSI', 'KASIR')} bolehHapus={bisaUbah} judul="Lampiran BKK" />
+          <PanelLampiran jenis="BKK" id={bkk.id} bolehUnggah={bkk.status !== 'BATAL' && punya('STAF_KEUANGAN', 'KASUBAG_KEUANGAN', 'KASIR')} bolehHapus={bisaUbah} judul="Lampiran BKK" />
           <LampiranDasar bkk={bkk} />
         </div>
       </div>

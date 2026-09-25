@@ -85,7 +85,7 @@ router.get('/jurnal/ekspor', perlu(...PERAN_LIHAT), async (req, res) => {
   await catatAudit(pool, req.ctx, { aksi: 'EKSPOR', entitas: 'jurnal', ringkasan: `Ekspor ${rows.length} baris jurnal (${req.query.dari || 'awal'} s.d. ${req.query.sampai || 'akhir'})` });
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="jurnal_${req.query.dari || 'semua'}_${req.query.sampai || 'semua'}.csv"`);
-  res.send(`﻿${[kepala.join(','), ...isi].join('\r\n')}\r\n`);
+  res.send(`\uFEFF${[kepala.join(','), ...isi].join('\r\n')}\r\n`);
 });
 
 router.get('/jurnal/:id', perlu(...PERAN_LIHAT), async (req, res) => {

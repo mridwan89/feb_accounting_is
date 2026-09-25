@@ -373,7 +373,9 @@ router.get('/penerimaan/:id', perlu(...PERAN_LIHAT_PO), async (req, res) => {
   if (!l) throw galatTidakAda('Penerimaan tidak ditemukan.');
   const baris = await semua(
     pool,
-    `SELECT b.*, d.baris, d.uraian, d.qty AS qty_po, d.satuan, d.qty_diterima AS qty_diterima_total
+    `SELECT b.*, d.baris, d.uraian, d.qty AS qty_po, d.satuan, d.qty_diterima AS qty_diterima_total,
+            (SELECT COALESCE(SUM(x.qty), 0) FROM penerimaan_barang_detail x JOIN penerimaan_barang y ON y.id = x.penerimaan_id
+              WHERE x.po_detail_id = b.po_detail_id AND y.status = 'DICATAT' AND y.id < b.penerimaan_id) AS qty_sebelumnya
        FROM penerimaan_barang_detail b JOIN pesanan_pembelian_detail d ON d.id = b.po_detail_id
       WHERE b.penerimaan_id = ? ORDER BY d.baris`,
     [req.params.id],

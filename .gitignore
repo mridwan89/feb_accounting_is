@@ -7,3 +7,6 @@ desktop/out/
 *.log
 .DS_Store
 Thumbs.db
+e2e/test-results/
+e2e/laporan-uji/
+e2e/playwright/.cache/

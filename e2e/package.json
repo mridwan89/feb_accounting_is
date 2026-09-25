@@ -1,0 +1,15 @@
+{
+  "name": "siapkas-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Uji ujung-ke-ujung SIAPKas melalui antarmuka (Playwright, Chromium)",
+  "type": "module",
+  "scripts": {
+    "pretest": "npm --prefix ../client run build",
+    "test": "playwright test",
+    "tangkapan": "playwright test --grep @tangkapan"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

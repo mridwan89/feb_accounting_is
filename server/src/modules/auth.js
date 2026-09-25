@@ -11,16 +11,20 @@ export const ruteTerbuka = Router();
 export const router = Router();
 
 // Pembatas percobaan masuk per alamat IP (lapis kedua di samping kunci akun).
-const percobaanIp = new Map();
+// Hanya percobaan yang gagal yang dihitung, sehingga banyak pengguna yang masuk dengan benar tidak terhalang.
+const BATAS_GAGAL_IP = 30;
+const gagalIp = new Map();
 function periksaBatasIp(ip) {
-  const kini = Date.now();
-  const catatan = percobaanIp.get(ip);
-  if (!catatan || catatan.reset < kini) {
-    percobaanIp.set(ip, { n: 1, reset: kini + 10 * 60_000 });
-    return;
+  const catatan = gagalIp.get(ip);
+  if (catatan && catatan.reset > Date.now() && catatan.n >= BATAS_GAGAL_IP) {
+    throw new GalatApp(429, 'Terlalu banyak percobaan masuk yang gagal dari komputer ini. Tunggu 10 menit, lalu coba lagi.');
   }
-  catatan.n += 1;
-  if (catatan.n > 30) throw new GalatApp(429, 'Terlalu banyak percobaan masuk dari komputer ini. Tunggu 10 menit, lalu coba lagi.');
+}
+function catatGagalIp(ip) {
+  const kini = Date.now();
+  const catatan = gagalIp.get(ip);
+  if (!catatan || catatan.reset < kini) gagalIp.set(ip, { n: 1, reset: kini + 10 * 60_000 });
+  else catatan.n += 1;
 }
 
 const skemaMasuk = z.object({ username: z.string().trim().min(1), password: z.string().min(1) });
@@ -79,8 +83,12 @@ export async function masuk({ username, password, ip, userAgent }) {
 
 ruteTerbuka.post('/auth/masuk', async (req, res) => {
   const data = validasi(skemaMasuk, req.body);
-  const hasil = await masuk({ ...data, ip: ipKlien(req), userAgent: req.get('user-agent') });
-  if (hasil.galat) throw hasil.galat;
+  const ip = ipKlien(req);
+  const hasil = await masuk({ ...data, ip, userAgent: req.get('user-agent') });
+  if (hasil.galat) {
+    catatGagalIp(ip);
+    throw hasil.galat;
+  }
   res.json(hasil);
 });
 

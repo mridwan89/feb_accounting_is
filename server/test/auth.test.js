@@ -90,3 +90,19 @@ test('KF-ADM-08: masuk dan gagal masuk tercatat di log audit', async () => {
   const berhasil = await satu(pool, "SELECT COUNT(*) AS n FROM log_audit WHERE aksi = 'MASUK' AND username = 'akt1'");
   assert.ok(berhasil.n >= 1);
 });
+
+test('KNF-06: percobaan masuk gagal berulang dari satu komputer dibatasi, masuk yang berhasil tidak dihitung', async () => {
+  // Masuk yang berhasil berkali-kali tidak memicu pembatas.
+  for (let i = 0; i < 40; i += 1) assert.ok(await masuk('staf2'));
+  // Uji sebelumnya di berkas ini sudah menyumbang beberapa kegagalan; lanjutkan sampai batas 30 tercapai.
+  let ditolak = 0;
+  for (let i = 0; i < 40 && ditolak === 0; i += 1) {
+    const r = await request(app).post('/api/auth/masuk').send({ username: `tidakada${i}`, password: 'Salah123' });
+    if (r.status === 429) ditolak += 1;
+    else assert.equal(r.status, 401);
+  }
+  assert.equal(ditolak, 1, 'pembatas percobaan gagal per komputer aktif');
+  const ditahan = await request(app).post('/api/auth/masuk').send({ username: 'staf2', password: 'Demo2026' });
+  assert.equal(ditahan.status, 429);
+  assert.match(ditahan.body.pesan, /Tunggu 10 menit/);
+});

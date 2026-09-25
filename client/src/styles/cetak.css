@@ -1,0 +1,98 @@
+/* SIAPKas: formulir cetak ukuran A4. Pratinjau di layar menyerupai kertas; saat dicetak hanya halaman yang keluar. */
+@page {
+  size: A4 portrait;
+  margin: 12mm 12mm 16mm;
+}
+
+.cetak-latar { background: #e3e7ec; min-height: 100vh; padding: 16px 12px 48px; }
+.cetak-alat {
+  position: sticky; top: 8px; z-index: 10; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  max-width: 980px; margin: 0 auto 12px; padding: 10px 12px; background: #fff; border: 1px solid var(--garis); border-radius: 8px;
+  box-shadow: var(--bayangan);
+}
+.cetak-alat .kiri, .cetak-alat .kanan { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cetak-alat .catatan { font-size: 12px; color: var(--teks-2); }
+
+.halaman-a4 {
+  position: relative; width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; color: #111;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18); padding: 12mm 12mm 20mm; font-size: 10pt; line-height: 1.35;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+}
+.halaman-a4 > * { position: relative; z-index: 1; }
+.halaman-a4 + .halaman-a4 { margin-top: 16px; }
+
+/* kop dan judul */
+.kop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 8px; }
+.kop .nama { font-size: 13.5pt; font-weight: 700; }
+.kop .alamat { font-size: 8.5pt; color: #333; }
+.tanda-cetak { border: 1.5px solid #111; padding: 3px 10px; font-weight: 700; font-size: 9.5pt; letter-spacing: 0.08em; text-align: center; white-space: nowrap; }
+.tanda-cetak.pratinjau { border-style: dashed; color: #666; }
+.tanda-cetak small { display: block; font-weight: 400; letter-spacing: 0; font-size: 7.5pt; }
+.judul-form { text-align: center; margin: 6px 0 10px; }
+.judul-form h1 { font-size: 12.5pt; letter-spacing: 0.06em; text-transform: uppercase; margin: 0; }
+.judul-form .nomor { font-size: 10pt; margin-top: 2px; font-weight: 600; }
+.judul-form .sub { font-size: 9pt; color: #333; }
+
+/* blok keterangan dua kolom */
+.cetak-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 18px; margin-bottom: 8px; font-size: 9.5pt; }
+.cetak-info.satu { grid-template-columns: 1fr; }
+.cetak-info .b { display: grid; grid-template-columns: 33mm 3mm 1fr; }
+.cetak-info .b .l { color: #222; }
+.cetak-info .b .n { font-weight: 500; word-break: break-word; }
+.cetak-bagian { font-weight: 700; font-size: 9.5pt; margin: 8px 0 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* tabel */
+table.cetak-tabel { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 4px 0 6px; }
+.cetak-tabel th, .cetak-tabel td { border: 1px solid #555; padding: 3px 5px; vertical-align: top; }
+.cetak-tabel th { background: #ececec; font-weight: 600; text-align: left; }
+.cetak-tabel td.angka, .cetak-tabel th.angka { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cetak-tabel td.tengah, .cetak-tabel th.tengah { text-align: center; }
+.cetak-tabel tfoot td { font-weight: 700; background: #f6f6f6; }
+.cetak-tabel.tanpa-garis td, .cetak-tabel.tanpa-garis th { border: none; padding: 2px 4px; }
+.cetak-tabel .kosong-baris td { height: 7mm; }
+
+.cetak-terbilang { border: 1px solid #555; padding: 4px 6px; font-style: italic; margin: 4px 0 8px; font-size: 9.5pt; }
+.cetak-terbilang b { font-style: normal; }
+.cetak-catatan { font-size: 8.5pt; color: #333; margin: 4px 0; }
+
+/* riwayat persetujuan elektronik */
+.cetak-persetujuan { font-size: 8.5pt; }
+.cetak-persetujuan td, .cetak-persetujuan th { padding: 2px 4px; }
+
+/* kolom tanda tangan basah */
+.cetak-ttd { display: grid; grid-template-columns: repeat(var(--kolom, 4), minmax(0, 1fr)); margin-top: 10px; border: 1px solid #555; break-inside: avoid; }
+.cetak-ttd > div { border-right: 1px solid #555; padding: 4px 6px; min-height: 30mm; display: flex; flex-direction: column; justify-content: space-between; font-size: 8.5pt; text-align: center; }
+.cetak-ttd > div:last-child { border-right: none; }
+.cetak-ttd .peran { font-weight: 600; }
+.cetak-ttd .nama { border-top: 1px dotted #555; padding-top: 2px; min-height: 12px; }
+.cetak-ttd .tgl { color: #444; font-size: 7.5pt; }
+
+/* tanda air dan cap */
+.cap-air { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 0; overflow: hidden; }
+.cap-air span { font-size: 88pt; font-weight: 800; color: rgba(180, 35, 24, 0.13); transform: rotate(-30deg); letter-spacing: 0.12em; white-space: nowrap; }
+.cap-air.draf span { color: rgba(60, 60, 60, 0.11); }
+.cap-lunas-cetak {
+  position: absolute; right: 16mm; top: 46mm; z-index: 2; border: 3px double #15803d; color: #15803d; font-weight: 800; font-size: 18pt;
+  padding: 2px 12px; transform: rotate(-8deg); letter-spacing: 0.14em; text-align: center; line-height: 1.1;
+}
+.cap-lunas-cetak small { display: block; font-size: 7.5pt; letter-spacing: 0; font-weight: 600; }
+
+.cetak-kaki {
+  position: absolute; left: 12mm; right: 12mm; bottom: 8mm; font-size: 7.5pt; color: #555; display: flex; justify-content: space-between; gap: 12px;
+  border-top: 1px solid #bbb; padding-top: 3px; z-index: 1;
+}
+
+/* blanko: baris kosong untuk diisi tangan */
+.garis-isi { border-bottom: 1px dotted #555; min-height: 6mm; }
+.kotak-centang { display: inline-block; width: 3.2mm; height: 3.2mm; border: 1px solid #333; vertical-align: -0.5mm; margin-right: 1.5mm; }
+
+@media print {
+  html, body { background: #fff !important; }
+  .cetak-latar { background: #fff; padding: 0; min-height: 0; }
+  .cetak-alat { display: none !important; }
+  .halaman-a4 { box-shadow: none; margin: 0; width: auto; min-height: 0; padding: 0 0 6mm; }
+  .halaman-a4 + .halaman-a4 { margin-top: 0; break-before: page; }
+  .cap-air { position: fixed; }
+  .cetak-kaki { position: fixed; left: 0; right: 0; bottom: -10mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -137,7 +137,7 @@ test('KF-AKT-06: ekspor jurnal menghasilkan CSV UTF-8 dengan kepala kolom', asyn
   const r = await k.akt1.get('/api/jurnal/ekspor?dari=2026-08-01&sampai=2026-08-31');
   assert.equal(r.status, 200);
   assert.match(r.headers['content-type'], /text\/csv/);
-  const teks = r.text.replace(/^﻿/, '');
+  const teks = r.text.replace(/^\uFEFF/, '');
   const baris = teks.trim().split('\r\n');
   assert.equal(baris[0], 'tanggal,nomor_jurnal,jenis,sumber,nomor_sumber,keterangan,baris,kode_akun,nama_akun,departemen,pemasok,keterangan_baris,debit,kredit');
   assert.ok(baris.length > 20);

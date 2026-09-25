@@ -1,0 +1,42 @@
+{
+  "name": "siapkas-desktop",
+  "productName": "SIAPKas",
+  "version": "1.0.0",
+  "description": "Aplikasi desktop SIAPKas: cangkang Electron yang memuat antarmuka dari server SIAPKas di LAN",
+  "main": "src/main.js",
+  "author": "Tim Proyek SIAPKas",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --siapkas-dev",
+    "dist": "electron-builder --win nsis --x64",
+    "dist:dir": "electron-builder --dir"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "id.siapkas.desktop",
+    "productName": "SIAPKas",
+    "copyright": "Hak cipta PT Sejahtera Abadi Nusantara",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["src/**/*", "build/icon.png", "package.json"],
+    "extraFiles": [{ "from": "build/konfigurasi.contoh.json", "to": "konfigurasi.contoh.json" }],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.png", "artifactName": "SIAPKas-Setup-${version}.${ext}" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "SIAPKas",
+      "language": "1057"
+    },
+    "linux": { "target": ["AppImage"], "category": "Office" },
+    "publish": [{ "provider": "generic", "url": "https://siapkas.kantor.local:3000/pembaruan" }]
+  }
+}

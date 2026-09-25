@@ -860,12 +860,19 @@ export function HalamanCetak() {
 
   if (!url || !TEMPLAT[jenis]) return <Pesan jenis="galat">Jenis dokumen ini tidak memiliki formulir cetak.</Pesan>;
 
-  const cetak = async () => {
+  // Cetak ke printer atau simpan PDF (aplikasi desktop). Keduanya dicatat server sebagai cetakan dokumen.
+  const cetak = async (keluaran = 'printer', namaBerkas = jenis) => {
     setSibuk(true);
     try {
       const r = await api.post(`/cetak/${jenis}/${id}`);
       flushSync(() => setCetakan(r));
-      window.print();
+      if (keluaran === 'pdf') {
+        const h = await window.siapkasDesktop.simpanPdf(namaBerkas);
+        if (h?.ok) toast.sukses(`PDF tersimpan di ${h.lokasi}.`);
+        else if (h && !h.batal) toast.galat(h.pesan || 'PDF gagal disimpan.');
+      } else {
+        window.print();
+      }
     } catch (e) {
       toast.galat(e.message);
     } finally {
@@ -874,6 +881,7 @@ export function HalamanCetak() {
       qc.invalidateQueries({ queryKey: [url] });
     }
   };
+  const bisaPdf = typeof window.siapkasDesktop?.simpanPdf === 'function';
 
   return (
     <div className="cetak-latar">
@@ -913,7 +921,12 @@ export function HalamanCetak() {
                     {d.jumlah_cetak ? `Sudah dicetak ${d.jumlah_cetak} kali. ` : 'Belum pernah dicetak. '}
                     Cetakan berikutnya bertanda {tandaDari(berikut)}.
                   </span>
-                  <Tombol varian="utama" ikon="cetak" onClick={cetak} sibuk={sibuk}>
+                  {bisaPdf && (
+                    <Tombol ikon="unduh" onClick={() => cetak('pdf', String(d.nomor || `${jenis}-${id}`).replace(/\//g, '-'))} disabled={sibuk}>
+                      Simpan sebagai PDF
+                    </Tombol>
+                  )}
+                  <Tombol varian="utama" ikon="cetak" onClick={() => cetak('printer')} sibuk={sibuk}>
                     Cetak formulir
                   </Tombol>
                 </div>

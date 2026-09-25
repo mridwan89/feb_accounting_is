@@ -5,7 +5,6 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.PORT_E2E || 3200);
 
 export default defineConfig({
-  testDir: './tests',
   fullyParallel: false,
   workers: 1,
   timeout: 60_000,
@@ -19,7 +18,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  projects: [
+    { name: 'chromium', testDir: './tests', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    // Cangkang Electron diuji sesudah skenario peramban; di Linux tanpa layar jalankan dengan xvfb-run.
+    { name: 'desktop', testDir: './tests-desktop', dependencies: ['chromium'] },
+  ],
   webServer: {
     // Data demo dibuat ulang lebih dulu, baru server dinyalakan.
     command: 'node db/demo.js --reset && node src/index.js',

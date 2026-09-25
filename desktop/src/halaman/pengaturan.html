@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'" />
+    <title>Pengaturan server SIAPKas</title>
+    <link rel="stylesheet" href="gaya.css" />
+  </head>
+  <body>
+    <main class="kartu">
+      <div class="merek"><img src="ikon.svg" alt="" /><strong>SIAPKas</strong></div>
+      <h1>Hubungkan ke server SIAPKas</h1>
+      <p>Masukkan alamat server yang diberikan Bagian TI. Alamat ini cukup diisi sekali pada komputer ini.</p>
+      <form id="formulir" novalidate>
+        <label for="alamat">Alamat server</label>
+        <input id="alamat" name="alamat" type="text" placeholder="https://siapkas.kantor.local:3000" autocomplete="off" autofocus />
+        <div id="status" class="status" role="status"></div>
+        <div class="aksi">
+          <button type="button" id="uji">Uji koneksi</button>
+          <button type="submit" id="simpan" class="utama">Simpan dan buka SIAPKas</button>
+        </div>
+      </form>
+      <div class="kecil" id="versi"></div>
+    </main>
+    <script src="pengaturan.js"></script>
+  </body>
+</html>

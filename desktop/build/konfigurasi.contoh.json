@@ -1,0 +1,5 @@
+{
+  "server": "https://siapkas.kantor.local:3000",
+  "kunci_alamat": true,
+  "sertifikat_sidik_jari": ""
+}
